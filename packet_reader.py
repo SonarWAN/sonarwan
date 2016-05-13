@@ -20,8 +20,12 @@ class HttpHeaderMatcher(Matcher):
 
         headers = {}
         for header in lst:
-            k, v = header.split(b': ')
-            headers[k.lower()] = v
+            try:
+                k, v = header.split(b': ')
+                headers[k.lower()] = v
+            except Exception:
+                # import pdb; pdb.set_trace()
+                pass
 
         return headers.get(self.header.lower())
 
@@ -45,13 +49,18 @@ class AndroidMatcher(HttpHeaderMatcher):
     header = b'User-Agent'
     value = b'Android'
 
+class MacMatcher(HttpHeaderMatcher):
+    header = b'User-Agent'
+    value = b'Mac OS X'
+
 matchers = [
     iPhoneMatcher(),
     AndroidMatcher(),
+    MacMatcher(),
 ]
 
 
-def main(input, function):
+def main(input):
     """Call function on each packet of a large input file"""
     with PcapReader(input) as pcap_reader:
         for pkt in pcap_reader:
@@ -60,5 +69,5 @@ def main(input, function):
                     print(matcher.emit(pkt))
 
 if __name__ == '__main__':
-    main(argv[1], lambda p : p.summary())
+    main(argv[1])
 
