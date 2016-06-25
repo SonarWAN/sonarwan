@@ -32,12 +32,12 @@ class Environment(object):
         self.devices.append(device)
 
 
-class Reader(object):
+class SonarWan(object):
 
     def __init__(self, environment):
         self.environment = environment
 
-    def process_file(self, path):
+    def analyze(self, path):
         cap = pyshark.FileCapture(path)
 
         for pkg in cap:
@@ -48,7 +48,7 @@ class Reader(object):
 
 if __name__ == '__main__':
     env = Environment()
-    reader = Reader(environment=env)
-    reader.process_file(sys.argv[1])
+    reader = SonarWan(environment=env)
+    reader.analyze(sys.argv[1])
 
     print(env.devices)
