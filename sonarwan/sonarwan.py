@@ -1,47 +1,8 @@
-import sys
 import pyshark
+import sys
 
-
-def show_progress(pkg_index):
-    sys.stdout.write("\rProcessed packets {}".format(pkg_index))
-    sys.stdout.flush()
-
-
-def create_http_stream(pkg):
-    if hasattr(pkg.http, 'request'):
-        return HTTPStream(pkg.tcp.stream,
-                          ip_src=pkg.ip.src, ip_dst=pkg.ip.dst,
-                          port_src=pkg.tcp.srcport, port_dst=pkg.tcp.dstport)
-    return HTTPStream(pkg.tcp.stream,
-                      ip_src=pkg.ip.dst, ip_dst=pkg.ip.src,
-                      port_src=pkg.tcp.dstport, port_dst=pkg.tcp.srcport)
-
-
-class Stream(object):
-
-    def __init__(self, number, **kwargs):
-        self.number = number
-        self.ip_src = kwargs['ip_src']
-        self.ip_dst = kwargs['ip_dst']
-        self.port_src = kwargs['port_src']
-        self.port_dst = kwargs['port_dst']
-
-    def __repr__(self):
-        return ' -> '.join(['({} - {})'.format(self.ip_src, self.port_src),
-                            '({} - {})'.format(self.ip_dst, self.port_dst)])
-
-
-class TCPStream(Stream):
-
-    def __init__(self, number, **kwargs):
-        super().__init__(number, **kwargs)
-
-
-class HTTPStream(TCPStream):
-
-    def __init__(self, number, **kwargs):
-        super().__init__(number, **kwargs)
-
+import streams
+import utils
 
 class Device(object):
 
@@ -75,7 +36,7 @@ class Environment(object):
         app_layer = pkg.layers[-1]
 
         if app_layer.layer_name == 'http' and hasattr(pkg, 'tcp'):
-            stream = create_http_stream(pkg)
+            stream = streams.create_http_stream(pkg)
             for d in self.devices:
                 if stream in d:
                     # update scenario
@@ -105,7 +66,7 @@ class SonarWan(object):
         i = 0
         for pkg in cap:
             i += 1
-            show_progress(i)
+            utils.show_progress(i)
             protocol = pkg.layers[-1].layer_name
             if protocol in ['http']:
                 env.update(pkg)
