@@ -1,8 +1,26 @@
 import pyshark
 import sys
+import socket
 
 import streams
 import utils
+
+
+def create_http_stream(pkg):
+    if hasattr(pkg.http, 'request'):
+        stream = streams.HTTPStream(pkg.tcp.stream,
+                                    ip_src=pkg.ip.src, ip_dst=pkg.ip.dst,
+                                    port_src=pkg.tcp.srcport, port_dst=pkg.tcp.dstport)
+    else:
+        stream = streams.HTTPStream(pkg.tcp.stream,
+                                    ip_src=pkg.ip.dst, ip_dst=pkg.ip.src,
+                                    port_src=pkg.tcp.dstport, port_dst=pkg.tcp.srcport)
+    try:
+        stream.address = socket.gethostbyaddr(str(stream.ip_dst))[0]
+    except socket.herror:
+        pass
+    return stream
+
 
 class Device(object):
 
@@ -31,20 +49,30 @@ class Environment(object):
 
     def __init__(self):
         self.devices = []
+        self.functions = {
+            'http': self.__update_http,
+            'dns': self.__update_dns,
+        }
 
     def update(self, pkg):
         app_layer = pkg.layers[-1]
+        func = self.functions.get(app_layer.layer_name, lambda p: None)
+        func(pkg)
 
-        if app_layer.layer_name == 'http' and hasattr(pkg, 'tcp'):
-            stream = streams.create_http_stream(pkg)
+    def __update_dns(self, pkg):
+        pass
+
+    def __update_http(self, pkg):
+        if hasattr(pkg, 'tcp'):
+            stream = create_http_stream(pkg)
             for d in self.devices:
                 if stream in d:
                     # update scenario
                     return
             device = Device()
-            if hasattr(app_layer, 'user_agent'):
-                device.name = app_layer.user_agent
-                device.model = app_layer.user_agent.split(',')[0]
+            if hasattr(pkg.http, 'user_agent'):
+                device.name = pkg.http.user_agent
+                device.model = pkg.http.user_agent.split(',')[0]
             device.add_stream(stream)
             self.devices.append(device)
 
@@ -67,9 +95,7 @@ class SonarWan(object):
         for pkg in cap:
             i += 1
             utils.show_progress(i)
-            protocol = pkg.layers[-1].layer_name
-            if protocol in ['http']:
-                env.update(pkg)
+            env.update(pkg)
         print()
 
 
