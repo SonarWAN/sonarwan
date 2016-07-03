@@ -1,18 +1,21 @@
 import sys
 import pyshark
 
+
 def show_progress(pkg_index):
     sys.stdout.write("\rProcessed packets {}".format(pkg_index))
     sys.stdout.flush()
 
+
 def create_http_stream(pkg):
-        if hasattr(pkg.http, 'request'):
-            return HTTPStream(pkg.tcp.stream,
-                                    ip_src = pkg.ip.src, ip_dst = pkg.ip.dst,
-                                    port_src = pkg.tcp.srcport, port_dst = pkg.tcp.dstport)
+    if hasattr(pkg.http, 'request'):
         return HTTPStream(pkg.tcp.stream,
-                                ip_src = pkg.ip.dst, ip_dst = pkg.ip.src,
-                                port_src = pkg.tcp.dstport, port_dst = pkg.tcp.srcport)
+                          ip_src=pkg.ip.src, ip_dst=pkg.ip.dst,
+                          port_src=pkg.tcp.srcport, port_dst=pkg.tcp.dstport)
+    return HTTPStream(pkg.tcp.stream,
+                      ip_src=pkg.ip.dst, ip_dst=pkg.ip.src,
+                      port_src=pkg.tcp.dstport, port_dst=pkg.tcp.srcport)
+
 
 class Stream(object):
 
@@ -45,7 +48,7 @@ class Device(object):
     def __init__(self):
         self.name = 'Unknown device'
         self.model = None
-        self.streams = [] # List of Streams
+        self.streams = []  # List of Streams
 
     def __repr__(self):
         return '<Device: {}>'.format(str(self))
@@ -99,9 +102,9 @@ class SonarWan(object):
     def analyze(self, path):
         cap = pyshark.FileCapture(path)
 
-        i=0
+        i = 0
         for pkg in cap:
-            i+=1
+            i += 1
             show_progress(i)
             protocol = pkg.layers[-1].layer_name
             if protocol in ['http']:
