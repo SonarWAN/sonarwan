@@ -12,6 +12,27 @@ class Stream(object):
         return ' -> '.join(['({} - {})'.format(self.ip_src, self.port_src),
                             '({} - {})'.format(self.ip_dst, self.port_dst)])
 
+    def get_type(self):
+        return ''
+
+
+class UDPStream(Stream):
+
+    def __init__(self, number, **kwargs):
+        super().__init__(number, **kwargs)
+
+
+class DNSStream(UDPStream):
+
+    def __init__(self, number, domain_name, **kwargs):
+        super().__init__(number, **kwargs)
+        self.domain_name = domain_name
+
+    def __repr__(self):
+        return 'query for {}'.format(self.domain_name)
+
+    def get_type(self):
+        return 'DNS'
 
 class TCPStream(Stream):
 
@@ -23,3 +44,6 @@ class HTTPStream(TCPStream):
 
     def __init__(self, number, **kwargs):
         super().__init__(number, **kwargs)
+
+    def get_type(self):
+        return 'HTTP'
