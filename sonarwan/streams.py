@@ -21,6 +21,9 @@ class UDPStream(Stream):
     def __init__(self, number, **kwargs):
         super().__init__(number, **kwargs)
 
+    def same_transport(self, pkg):
+        return hasattr(pkg, 'udp')
+
 
 class DNSStream(UDPStream):
 
@@ -34,11 +37,14 @@ class DNSStream(UDPStream):
     def get_type(self):
         return 'DNS'
 
+
 class TCPStream(Stream):
 
     def __init__(self, number, **kwargs):
         super().__init__(number, **kwargs)
 
+    def same_transport(selfi, pkg):
+        return hasattr(pkg, 'tcp')
 
 class HTTPStream(TCPStream):
 

@@ -75,7 +75,7 @@ class Environment(object):
             except:
                 number = pkg.udp.stream
             for s in d.streams:
-                if number == s.number:
+                if s.same_transport(pkg) and number == s.number:
                     return d,s
         raise LookupError
 
