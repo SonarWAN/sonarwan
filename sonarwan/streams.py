@@ -20,9 +20,7 @@ class UDPStream(Stream):
 
     def __init__(self, number, **kwargs):
         super().__init__(number, **kwargs)
-
-    def same_transport(self, pkg):
-        return hasattr(pkg, 'udp')
+        self.transport_protocol = 'udp'
 
 
 class DNSStream(UDPStream):
@@ -42,9 +40,8 @@ class TCPStream(Stream):
 
     def __init__(self, number, **kwargs):
         super().__init__(number, **kwargs)
+        self.transport_protocol = 'tcp'
 
-    def same_transport(selfi, pkg):
-        return hasattr(pkg, 'tcp')
 
 class HTTPStream(TCPStream):
 
@@ -53,3 +50,14 @@ class HTTPStream(TCPStream):
 
     def get_type(self):
         return 'HTTP'
+
+
+class SSLStream(TCPStream):
+
+    def __init__(self, number, **kwargs):
+        super().__init__(number, **kwargs)
+        self.cipher_suite = []
+        self.certificate = None
+
+    def get_type(self):
+        return 'SSL'

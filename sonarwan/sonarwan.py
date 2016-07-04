@@ -5,16 +5,24 @@ import socket
 import streams
 import utils
 
+
 def is_query(pkg):
     return not hasattr(pkg.dns, 'a')
+
 
 def is_request(pkg):
     return hasattr(pkg.http, 'request')
 
+
+def is_client_hello(pkg):
+    return (hasattr(pkg.ssl, 'record') and
+            pkg.ssl.record.split(': ')[-1] == 'Client Hello')
+
+
 def create_stream_dict(pkg):
     transport_pkg = pkg.udp if hasattr(pkg, 'udp') else pkg.tcp
-    return {'ip_src': pkg.ip.src, 'ip_dst' : pkg.ip.dst,
-            'port_src': transport_pkg.srcport, 'port_dst' : transport_pkg.dstport}
+    return {'ip_src': pkg.ip.src, 'ip_dst': pkg.ip.dst,
+            'port_src': transport_pkg.srcport, 'port_dst': transport_pkg.dstport}
 
 
 class Device(object):
@@ -25,7 +33,7 @@ class Device(object):
         self.streams = []  # List of Streams
 
     @classmethod
-    def from_stream(cls, stream,pkg):
+    def from_stream(cls, stream, pkg):
         device = cls()
         device.streams.append(stream)
         # TODO improve style
@@ -69,14 +77,17 @@ class Environment(object):
         func(pkg)
 
     def locate(self, pkg):
-        for d in self.devices:
+        for device in self.devices:
             try:
                 number = pkg.tcp.stream
+                transport_prot = 'tcp'
             except:
                 number = pkg.udp.stream
-            for s in d.streams:
-                if s.same_transport(pkg) and number == s.number:
-                    return d,s
+                transport_prot = 'udp'
+            for stream in device.streams:
+                if (stream.number == number and
+                        stream.transport_protocol == transport_prot):
+                    return device, stream
         raise LookupError
 
     def __http_handler(self, pkg):
@@ -89,21 +100,35 @@ class Environment(object):
             device.update(stream, pkg)
             return
         except LookupError:
-            if is_request(pkg): # NOT neccesary, if it is response it must have been located
-                stream = streams.HTTPStream(pkg.tcp.stream, **create_stream_dict(pkg))
+            if is_request(pkg):  # NOT neccesary, if it is response it must have been located
+                stream = streams.HTTPStream(
+                    pkg.tcp.stream, **create_stream_dict(pkg))
                 d = Device.from_stream(stream, pkg)
                 self.devices.append(d)
 
     def __dns_handler(self, pkg):
         if is_query(pkg):
-            stream = streams.DNSStream(pkg.udp.stream, pkg.dns.qry_name, **create_stream_dict(pkg))
+            stream = streams.DNSStream(
+                pkg.udp.stream, pkg.dns.qry_name, **create_stream_dict(pkg))
             d = Device.from_stream(stream, pkg)
             self.devices.append(d)
         else:
             pass
 
     def __ssl_handler(self, pkg):
-        pass
+        try:
+            device, stream = self.locate(pkg)
+            device.update(stream, pkg)
+            return
+        except LookupError:
+            if is_client_hello(pkg):
+                stream = streams.SSLStream(
+                    pkg.tcp.stream, **create_stream_dict(pkg))
+                d = Device.from_stream(stream, pkg)
+                self.devices.append(d)
+            else:
+                # TODO handle different tls pkgs
+                pass
 
     def pretty_print(self):
         for d in self.devices:
