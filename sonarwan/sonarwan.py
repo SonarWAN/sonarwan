@@ -1,6 +1,7 @@
 import pyshark
 import sys
 import socket
+import time
 
 import streams
 import utils
@@ -65,6 +66,7 @@ class Environment(object):
 
     def __init__(self):
         self.devices = []
+        self.map = {'tcp': {}, 'udp': {}}
         self.functions = {
             'http': self.__http_handler,
             'dns': self.__dns_handler,
@@ -77,17 +79,15 @@ class Environment(object):
         func(pkg)
 
     def locate(self, pkg):
-        for device in self.devices:
-            try:
-                number = pkg.tcp.stream
-                transport_prot = 'tcp'
-            except:
-                number = pkg.udp.stream
-                transport_prot = 'udp'
-            for stream in device.streams:
-                if (stream.number == number and
-                        stream.transport_protocol == transport_prot):
-                    return device, stream
+        try:
+            number = pkg.tcp.stream
+            transport_prot = 'tcp'
+        except:
+            number = pkg.udp.stream
+            transport_prot = 'udp'
+        t = self.map[transport_prot].get(number)
+        if t:
+            return t
         raise LookupError
 
     def __http_handler(self, pkg):
@@ -105,6 +105,7 @@ class Environment(object):
                     pkg.tcp.stream, **create_stream_dict(pkg))
                 d = Device.from_stream(stream, pkg)
                 self.devices.append(d)
+                self.map['tcp'][stream.number] = (d,stream)
 
     def __dns_handler(self, pkg):
         if is_query(pkg):
@@ -112,6 +113,7 @@ class Environment(object):
                 pkg.udp.stream, pkg.dns.qry_name, **create_stream_dict(pkg))
             d = Device.from_stream(stream, pkg)
             self.devices.append(d)
+            self.map['udp'][stream.number] = (d,stream)
         else:
             pass
 
@@ -126,6 +128,7 @@ class Environment(object):
                     pkg.tcp.stream, **create_stream_dict(pkg))
                 d = Device.from_stream(stream, pkg)
                 self.devices.append(d)
+                self.map['tcp'][stream.number] = (d,stream)
             else:
                 # TODO handle different tls pkgs
                 pass
@@ -154,8 +157,10 @@ class SonarWan(object):
 
 
 if __name__ == '__main__':
+    start_time = time.time()
     env = Environment()
     reader = SonarWan(environment=env)
     reader.analyze(sys.argv[1])
 
     env.pretty_print()
+    print('Execution time: {}'.format((time.time() - start_time)))
