@@ -20,7 +20,6 @@ class UDPStream(Stream):
 
     def __init__(self, number, **kwargs):
         super().__init__(number, **kwargs)
-        self.transport_protocol = 'udp'
 
 
 class DNSStream(UDPStream):
@@ -40,7 +39,6 @@ class TCPStream(Stream):
 
     def __init__(self, number, **kwargs):
         super().__init__(number, **kwargs)
-        self.transport_protocol = 'tcp'
 
 
 class HTTPStream(TCPStream):
