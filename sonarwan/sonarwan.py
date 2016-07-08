@@ -26,6 +26,12 @@ def create_stream_dict(pkg):
             'port_src': transport_pkg.srcport, 'port_dst': transport_pkg.dstport}
 
 
+def get_cipher_suite(pkg):
+    l = pkg.ssl._get_all_fields_with_alternates()
+    cipher_suite = [x for x in l if x.name == 'ssl.handshake.ciphersuite']
+    return list(map(lambda x: (x.raw_value, x.showname_value), cipher_suite))
+
+
 class Device(object):
 
     def __init__(self):
@@ -105,7 +111,7 @@ class Environment(object):
                     pkg.tcp.stream, **create_stream_dict(pkg))
                 d = Device.from_stream(stream, pkg)
                 self.devices.append(d)
-                self.map['tcp'][stream.number] = (d,stream)
+                self.map['tcp'][stream.number] = (d, stream)
 
     def __dns_handler(self, pkg):
         if is_query(pkg):
@@ -113,7 +119,7 @@ class Environment(object):
                 pkg.udp.stream, pkg.dns.qry_name, **create_stream_dict(pkg))
             d = Device.from_stream(stream, pkg)
             self.devices.append(d)
-            self.map['udp'][stream.number] = (d,stream)
+            self.map['udp'][stream.number] = (d, stream)
         else:
             pass
 
@@ -125,10 +131,11 @@ class Environment(object):
         except LookupError:
             if is_client_hello(pkg):
                 stream = streams.SSLStream(
-                    pkg.tcp.stream, **create_stream_dict(pkg))
+                    pkg.tcp.stream, get_cipher_suite(pkg),
+                    **create_stream_dict(pkg))
                 d = Device.from_stream(stream, pkg)
                 self.devices.append(d)
-                self.map['tcp'][stream.number] = (d,stream)
+                self.map['tcp'][stream.number] = (d, stream)
             else:
                 # TODO handle different tls pkgs
                 pass

@@ -54,10 +54,9 @@ class HTTPStream(TCPStream):
 
 class SSLStream(TCPStream):
 
-    def __init__(self, number, **kwargs):
+    def __init__(self, number, cipher_suite=[], **kwargs):
         super().__init__(number, **kwargs)
-        self.cipher_suite = []
-        self.certificate = None
+        self.cipher_suite = cipher_suite
 
     def get_type(self):
         return 'SSL'
