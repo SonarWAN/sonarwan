@@ -65,18 +65,19 @@ class Transport(Enum):
 class Device(object):
 
     def __init__(self):
-        self.name = 'Unknown device'
         self.model = None
         self.streams = []  # List of Streams
         self.services = {}
         self.characteristics = {}
-        self.os_version = None
+        self._os_version = None
         self.os_name = None
 
     def __repr__(self):
         return '<Device: {}>'.format(str(self))
 
     def __str__(self):
+        if not any([self.model, self.os_name, self.os_version]):
+            return 'Unknown Device'
         return '{} {} {}'.format(self.model, self.os_name, self.os_version)
 
     def __contains__(self, stream):
@@ -85,6 +86,27 @@ class Device(object):
                 return True
         return False
 
+    @property
+    def os_version(self):
+        return self._os_version
+
+    @os_version.setter
+    def os_version(self, value):
+        if self._os_version is None or len(value) > len(self._os_version):
+            self._os_version = value
+
+    def similarity(self, k, v):
+        if k in self.characteristics:
+            compare_value = self.characteristics[k]
+            length = min(len(compare_value), len(v))
+            count = 0
+
+            for i in range(length):
+                if compare_value[i] == v[i]:
+                    count += 1
+            return count / float(length)
+        return 0
+
     def match_score(self, **kwargs):
         args = kwargs.copy()
         app_name = args.pop('app_name')
@@ -92,8 +114,7 @@ class Device(object):
 
         score = 0
 
-        characteristics = list(self.characteristics.items())
-        score += sum((k, v) in characteristics for k, v in args.items())
+        score += sum(self.similarity(k, v) for k, v in args.items())
 
         services = self.services.items()
         score += 1 if (app_name, app_version) in services else 0
@@ -110,13 +131,24 @@ class Device(object):
 
         self.characteristics.update(**kwargs)
 
+        if 'cfnetwork_version' in kwargs or 'darwin_version' in kwargs:
+            self.use_apple_app_ua(kwargs)
+
+        if 'os_version' in kwargs:
+            self.os_version = kwargs['os_version']
+
+        if 'model' in kwargs:
+            self.model = kwargs['model']
+
+    def use_apple_app_ua(self, kwargs):
         cfnetwork_version = kwargs.get('cfnetwork_version')
         darwin_version = kwargs.get('darwin_version')
         self.os_name, self.os_version = find_apple_data(APPLE_DATA, cfnetwork_version=cfnetwork_version, darwin_version=darwin_version)
-
+        self.characteristics['os_version'] = self.os_version
 
 USER_AGENT_PATTERNS = [
-    r'(?P<app_name>[^\\]+)\/(?P<app_version>\d+) CFNetwork\/(?P<cfnetwork_version>[\d\.]+) Darwin\/(?P<darwin_version>[\d\.]+)',
+    r'(?P<app_name>[^\\]+)((\/(?P<app_version>[\d\.]+))|( \(unknown version\))) CFNetwork\/(?P<cfnetwork_version>[\d\.]+) Darwin\/(?P<darwin_version>[\d\.]+)',
+    r'(?P<app_name>[^\/]+)\/(?P<app_version>[\d\.]+) \((?P<model>[^;]+); (?P<os_version>[\d\.]+); (?P<build>[^;]+); (?P<framework>[^\)]+)\)'
 ]
 
 
@@ -124,14 +156,16 @@ class Environment(object):
 
     def __init__(self):
         self.devices = []
-        self.map = {
-            Transport.TCP: {},
-            Transport.UDP: {},
-        }
         self.functions = {
             'http': self.__http_handler,
             # 'dns': self.__dns_handler,
             # 'ssl': self.__ssl_handler,
+        }
+
+    def prepare(self):
+        self.map = {
+            Transport.TCP: {},
+            Transport.UDP: {},
         }
 
     def update(self, pkg):
@@ -251,14 +285,15 @@ class SonarWan(object):
 
     def __init__(self, environment):
         self.environment = environment
+        self.i = 0
 
     def analyze(self, path):
         cap = pyshark.FileCapture(path)
+        env.prepare()
 
-        i = 0
         for pkg in cap:
-            i += 1
-            utils.show_progress(i)
+            self.i += 1
+            utils.show_progress(self.i)
             env.update(pkg)
         print()
 
@@ -267,7 +302,8 @@ if __name__ == '__main__':
     start_time = time.time()
     env = Environment()
     reader = SonarWan(environment=env)
-    reader.analyze(sys.argv[1])
+    for arg in sys.argv[1:]:
+        reader.analyze(arg)
 
     env.pretty_print()
     print('Execution time: {}'.format((time.time() - start_time)))
