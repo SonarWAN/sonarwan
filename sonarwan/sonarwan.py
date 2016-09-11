@@ -4,6 +4,7 @@ import sys
 import socket
 import time
 import re
+import csv
 
 from enum import Enum
 
@@ -35,6 +36,26 @@ def get_cipher_suite(pkg):
     cipher_suite = [x for x in l if x.name == 'ssl.handshake.ciphersuite']
     return list(map(lambda x: (x.raw_value, x.showname_value), cipher_suite))
 
+def apple_data():
+    with open("./data/apple_user_agents.csv") as f:
+        csvreader = csv.DictReader(f, delimiter=";")
+        return list(csvreader)
+
+APPLE_DATA = apple_data()
+
+def find_apple_data(data, cfnetwork_version=None, darwin_version=None):
+    if cfnetwork_version:
+        data = (
+            row for row in data
+            if row['CFNetwork Version number'].split('/')[1] == cfnetwork_version
+        )
+    if darwin_version:
+        data = (
+            row for row in data
+            if row['Darwin Version'].split('/')[1] == darwin_version
+        )
+    return next((row['OS Version'].rsplit(' ', 1) for row in data), (None,None))
+
 
 class Transport(Enum):
     TCP = 1
@@ -47,7 +68,7 @@ class Device(object):
         self.name = 'Unknown device'
         self.model = None
         self.streams = []  # List of Streams
-        self.services = set()
+        self.services = {}
         self.characteristics = {}
         self.os_version = None
         self.os_name = None
@@ -56,7 +77,7 @@ class Device(object):
         return '<Device: {}>'.format(str(self))
 
     def __str__(self):
-        return self.name
+        return '{} {} {}'.format(self.model, self.os_name, self.os_version)
 
     def __contains__(self, stream):
         for s in self.streams:
@@ -66,20 +87,32 @@ class Device(object):
 
     def match_score(self, **kwargs):
         args = kwargs.copy()
-        args.pop('app_name')
-        args.pop('app_version')
+        app_name = args.pop('app_name')
+        app_version = args.pop('app_version')
+
+        score = 0
 
         characteristics = list(self.characteristics.items())
-        return sum((k, v) in characteristics for k, v in args.items())
+        score += sum((k, v) in characteristics for k, v in args.items())
+
+        services = self.services.items()
+        score += 1 if (app_name, app_version) in services else 0
+
+        return score
 
     def update(self, **kwargs):
         app_name = kwargs.pop('app_name', None)
         app_version = kwargs.pop('app_version', None)
 
         if app_name:
-            self.services.add((app_name, app_version))
+            # TODO: check that this is safe
+            self.services[app_name] = app_version
 
         self.characteristics.update(**kwargs)
+
+        cfnetwork_version = kwargs.get('cfnetwork_version')
+        darwin_version = kwargs.get('darwin_version')
+        self.os_name, self.os_version = find_apple_data(APPLE_DATA, cfnetwork_version=cfnetwork_version, darwin_version=darwin_version)
 
 
 USER_AGENT_PATTERNS = [
