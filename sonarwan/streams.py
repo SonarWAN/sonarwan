@@ -15,6 +15,9 @@ class Stream(object):
     def get_type(self):
         return ''
 
+    def update(self, pkg):
+        pass
+
 
 class UDPStream(Stream):
 

@@ -1,7 +1,9 @@
 import pyshark
+import random
 import sys
 import socket
 import time
+import re
 
 from enum import Enum
 
@@ -45,17 +47,10 @@ class Device(object):
         self.name = 'Unknown device'
         self.model = None
         self.streams = []  # List of Streams
-
-    @classmethod
-    def from_stream(cls, stream, pkg):
-        device = cls()
-        device.streams.append(stream)
-        # TODO improve style
-        if type(stream) is streams.HTTPStream:
-            if hasattr(pkg.http, 'user_agent'):
-                device.name = pkg.http.user_agent
-                device.model = pkg.http.user_agent.split(',')[0]
-        return device
+        self.services = set()
+        self.characteristics = {}
+        self.os_version = None
+        self.os_name = None
 
     def __repr__(self):
         return '<Device: {}>'.format(str(self))
@@ -69,10 +64,27 @@ class Device(object):
                 return True
         return False
 
-    def update(self, stream, pkg):
-        # TODO update device when response come
-        # Calls stream.update(pkg)
-        pass
+    def match_score(self, **kwargs):
+        args = kwargs.copy()
+        args.pop('app_name')
+        args.pop('app_version')
+
+        characteristics = list(self.characteristics.items())
+        return sum((k, v) in characteristics for k, v in args.items())
+
+    def update(self, **kwargs):
+        app_name = kwargs.pop('app_name', None)
+        app_version = kwargs.pop('app_version', None)
+
+        if app_name:
+            self.services.add((app_name, app_version))
+
+        self.characteristics.update(**kwargs)
+
+
+USER_AGENT_PATTERNS = [
+    r'(?P<app_name>[^\\]+)\/(?P<app_version>\d+) CFNetwork\/(?P<cfnetwork_version>[\d\.]+) Darwin\/(?P<darwin_version>[\d\.]+)',
+]
 
 
 class Environment(object):
@@ -85,8 +97,8 @@ class Environment(object):
         }
         self.functions = {
             'http': self.__http_handler,
-            'dns': self.__dns_handler,
-            'ssl': self.__ssl_handler,
+            # 'dns': self.__dns_handler,
+            # 'ssl': self.__ssl_handler,
         }
 
     def update(self, pkg):
@@ -102,9 +114,50 @@ class Environment(object):
             number = pkg.udp.stream
             transport_prot = Transport.UDP
         t = self.map[transport_prot].get(number)
-        if t:
-            return t
-        raise LookupError
+
+        if not t:
+            raise LookupError
+        return t
+
+    def create_device(self):
+        device = Device()
+        self.devices.append(device)
+        return device
+
+    def create_or_update_device(self, **kwargs):
+        devices = []
+        max_score = float('-inf')
+
+        for d in self.devices:
+            score = d.match_score(**kwargs)
+            if score == max_score:
+                devices.append(d)
+            elif score > max_score:
+                max_score, devices = score, [d]
+
+        if devices:
+            device = random.choice(devices)
+        else:
+            device = self.create_device()
+
+        device.update(**kwargs)
+        return device
+
+        device = random.choice(deviceN)
+
+    def analyze_user_agent(self, user_agent):
+        device = None
+
+        for pattern in USER_AGENT_PATTERNS:
+            match = re.match(pattern, user_agent)
+            if match:
+                groups = match.groupdict()
+                device = self.create_or_update_device(**groups)
+
+        if not device:
+            device = self.create_device()
+
+        return device
 
     def __http_handler(self, pkg):
         # INVESTIGATE, some http packages are not tcp
@@ -113,15 +166,16 @@ class Environment(object):
 
         try:
             device, stream = self.locate(pkg)
-            device.update(stream, pkg)
-            return
         except LookupError:
-            if is_request(pkg):  # NOT neccesary, if it is response it must have been located
+            if is_request(pkg):
                 stream = streams.HTTPStream(
-                    pkg.tcp.stream, **create_stream_dict(pkg))
-                d = Device.from_stream(stream, pkg)
-                self.devices.append(d)
-                self.map[Transport.TCP][stream.number] = (d, stream)
+                pkg.tcp.stream, **create_stream_dict(pkg))
+
+                if hasattr(pkg.http, 'user_agent'):
+                    user_agent = pkg.http.user_agent
+                    device = self.analyze_user_agent(user_agent)
+
+                self.map[Transport.TCP][stream.number] = (device, stream)
 
     def __dns_handler(self, pkg):
         if is_query(pkg):
@@ -155,6 +209,9 @@ class Environment(object):
             print('Device: {}'.format(d))
             for s in d.streams:
                 print('\tStream {}: {}'.format(s.get_type(), s))
+                print('Services:')
+            for service in d.services:
+                print('\t {}'.format(service))
 
 
 class SonarWan(object):
