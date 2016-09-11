@@ -1,22 +1,22 @@
 CFNetwork Version number;OS Version;Darwin Version; Release Date
-CFNetwork/760.6.3;Mac OSX 10.11.6 El Capitan;Darwin/15.6.0;18. Jul. 2016
-CFNetwork/760.5.1;Mac OSX 10.11.5 El Capitan;Darwin/15.5.0;16. May 2016
-CFNetwork/760.5;Mac OSX 10.11.4 El Capitan beta;Darwin/15.5.0;06. Apr. 2016
-CFNetwork/760.4.2;Mac OSX 10.11.4 El Capitan;Darwin/15.4.0;21. Mar. 2016
-CFNetwork/760.2.6;Mac OSX 10.11.3 El Capitan;Darwin/15.3.0;19. Jan. 2016
-CFNetwork/760.2.6;Mac OSX 10.11.2 El Capitan;Darwin/15.2.0;08. Dec. 2015
-CFNetwork/760.1.2;Mac OSX 10.11.1 El Capitan;Darwin/15.0.0;21. Oct. 2015
-CFNetwork/760.0.5;Mac OSX 10.11.0 El Capitan;Darwin/15.0.0;30. Sep. 2015
-CFNetwork/720.5.7;Mac OSX 10.10.5 Yosemite;Darwin/14.5.0;13. Aug 2015
-CFNetwork/720.4.4;Mac OSX 10.10.4 Yosemite;Darwin/14.4.0;30. Jun 2015
-CFNetwork/720.3.13;Mac OSX 10.10.3 Yosemite;Darwin/14.3.0;08. Apr 2015
-CFNetwork/720.2.4;Mac OSX 10.10.2 Yosemite;Darwin/14.1.0;27. Jan 2015
-CFNetwork/720.1.1;Mac OSX 10.10.1 Yosemite ;Darwin/14.0.0;17. Nov 2014
-CFNetwork/720.0.9;Mac OSX 10.10.0 Yosemite ;Darwin/14.0.0;16. Oct 2014
+CFNetwork/760.6.3;Mac OSX 10.11.6;Darwin/15.6.0;18. Jul. 2016
+CFNetwork/760.5.1;Mac OSX 10.11.5;Darwin/15.5.0;16. May 2016
+CFNetwork/760.5;Mac OSX 10.11.4;Darwin/15.5.0;06. Apr. 2016
+CFNetwork/760.4.2;Mac OSX 10.11.4;Darwin/15.4.0;21. Mar. 2016
+CFNetwork/760.2.6;Mac OSX 10.11.3;Darwin/15.3.0;19. Jan. 2016
+CFNetwork/760.2.6;Mac OSX 10.11.2;Darwin/15.2.0;08. Dec. 2015
+CFNetwork/760.1.2;Mac OSX 10.11.1;Darwin/15.0.0;21. Oct. 2015
+CFNetwork/760.0.5;Mac OSX 10.11.0;Darwin/15.0.0;30. Sep. 2015
+CFNetwork/720.5.7;Mac OSX 10.10.5;Darwin/14.5.0;13. Aug 2015
+CFNetwork/720.4.4;Mac OSX 10.10.4;Darwin/14.4.0;30. Jun 2015
+CFNetwork/720.3.13;Mac OSX 10.10.3;Darwin/14.3.0;08. Apr 2015
+CFNetwork/720.2.4;Mac OSX 10.10.2;Darwin/14.1.0;27. Jan 2015
+CFNetwork/720.1.1;Mac OSX 10.10.1;Darwin/14.0.0;17. Nov 2014
+CFNetwork/720.0.9;Mac OSX 10.10.0;Darwin/14.0.0;16. Oct 2014
 CFNetwork/673.4;Mac OSX 10.9.5;Darwin/13.4.0;18. Sep 2014
 CFNetwork/673.4;Mac OSX 10.9.4;Darwin/13.3.0;30. Jun 2014
 CFNetwork/673.4;Mac OSX 10.9.3;Darwin/13.2.0;15. May 2014
-CFNetwork/673.3;Mac OSX 10.9.3 beta;Darwin/13.2.0; 
+CFNetwork/673.3;Mac OSX 10.9.3;Darwin/13.2.0; 
 CFNetwork/673.2.1;Mac OSX 10.9.2;Darwin/13.1.0;25. Feb 2014
 CFNetwork/673.0.3;Mac OSX 10.9.1;Darwin/13.0.2;16. Dec 2013
 CFNetwork/673.0.3;Mac OSX 10.9.0;Darwin/13.0.0;22. Oct 2013
