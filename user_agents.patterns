@@ -1,0 +1,2 @@
+(?P<app_name>[^\\]+)((\/(?P<app_version>[\d\.]+))|( \(unknown version\))) CFNetwork\/(?P<cfnetwork_version>[\d\.]+) Darwin\/(?P<darwin_version>[\d\.]+)
+(?P<app_name>[^\/]+)\/(?P<app_version>[\d\.]+) \((?P<model>[^;]+); (?P<os_version>[\d\.]+); (?P<build>[^;]+); (?P<framework>[^\)]+)\)
