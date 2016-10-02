@@ -70,7 +70,7 @@ class Device(object):
     def __init__(self):
         self.model = None
         self.streams = []  # List of Streams
-        self.services = {}
+        self.services = [] # List of characteristics
         self.characteristics = {}
         self._os_version = None
         self.os_name = None
@@ -113,10 +113,6 @@ class Device(object):
         return 0
 
     def match_score(self, device_args, app_args):
-        args = kwargs.copy()
-
-        # app_name = args.pop('app_name')
-        # app_version = args.pop('app_version')
 
         score = 0
 
@@ -134,26 +130,52 @@ class Device(object):
 
         return score
 
-    def update(self, **kwargs):
-        if app_name:
-            # TODO: check that this is safe
-            self.services[app_name] = app_version
+    def update(self, device_args, app_args):
+        # if app_name:
+        #     # TODO: check that this is safe
+        #     self.services[app_name] = app_version
 
         for k in self.characteristics:
             current_value = self.characteristics[k]
-            new_value = kwargs.get(k)
+            new_value = device_args.get(k)
 
             if new_value and len(new_value) > len(current_value):
                 self.characteristics[k] = new_value
 
-        if 'cfnetwork_version' in kwargs or 'darwin_version' in kwargs:
-            self.use_apple_app_ua(kwargs)
+        services = []
+        max_score = float('-inf')
 
-        if 'os_version' in kwargs:
-            self.os_version = kwargs['os_version']
+        for service in self.services:
+            for k, v in app_args.items():
+                score = self.similarity(service, k, v)
+                if score == -1:
+                    break
+                if score == max_score:
+                    services.append(service)
+                elif score > max_score:
+                    max_score, services = score, [service]
 
-        if 'model' in kwargs:
-            self.model = kwargs['model']
+        if services:
+            service = random.choice(services)
+            for k in service:
+                current_value = service[k]
+                new_value = app_args.get(k)
+
+                if new_value and len(new_value) > len(current_value):
+                    service[k] = new_value
+        else:
+            self.services.append(app_args.copy())
+            
+
+        # TODO inferenca
+        if 'cfnetwork_version' in device_args or 'darwin_version' in device_args:
+            self.use_apple_app_ua(device_args)
+
+        if 'os_version' in device_args:
+            self.os_version = device_args['os_version']
+
+        if 'model' in device_args:
+            self.model = device_args['model']
 
     def use_apple_app_ua(self, kwargs):
         cfnetwork_version = kwargs.get('cfnetwork_version')
@@ -205,12 +227,12 @@ class Environment(object):
         self.devices.append(device)
         return device
 
-    def create_or_update_device(self, **kwargs):
+    def create_or_update_device(self, device_args, app_args):
         devices = []
         max_score = float('-inf')
 
         for d in self.devices:
-            score = d.match_score(**kwargs)
+            score = d.match_score(device_args, app_args)
             if score == max_score:
                 devices.append(d)
             elif score > max_score:
@@ -221,7 +243,7 @@ class Environment(object):
         else:
             device = self.create_device()
 
-        device.update(**kwargs)
+        device.update(device_args, app_args)
         return device
 
         device = random.choice(deviceN)
@@ -233,7 +255,14 @@ class Environment(object):
             match = re.match(pattern, user_agent)
             if match:
                 groups = match.groupdict()
-                device = self.create_or_update_device(**groups)
+                device_args, app_args = {}, {}
+                for k in groups:
+                    if not groups[k]:
+                        if k.startswith('app_'):
+                            app_args[k[4:]] = groups[k]
+                        else:
+                            device_args[k] = groups[k]
+                device = self.create_or_update_device(device_args, app_args)
 
         if not device:
             device = self.create_device()
