@@ -107,7 +107,9 @@ class Device(object):
             for i in range(length):
                 if compare_value[i] == v[i]:
                     count += 1
-            return count / float(length)
+                else:
+                    return -1
+            return count / max(len(compare_value), len(v))
         return 0
 
     def match_score(self, **kwargs):
@@ -117,7 +119,11 @@ class Device(object):
 
         score = 0
 
-        score += sum(self.similarity(k, v) for k, v in args.items())
+        for k, v in args.items():
+            sim = self.similarity(k, v)
+            if sim == -1:
+                return -1
+            score += sim
 
         services = self.services.items()
         score += 1 if (app_name, app_version) in services else 0
@@ -132,7 +138,12 @@ class Device(object):
             # TODO: check that this is safe
             self.services[app_name] = app_version
 
-        self.characteristics.update(**kwargs)
+        for k in self.characteristics:
+            current_value = self.characteristics[k]
+            new_value = kwargs.get(k)
+
+            if new_value and len(new_value) > len(current_value):
+                self.characteristics[k] = new_value
 
         if 'cfnetwork_version' in kwargs or 'darwin_version' in kwargs:
             self.use_apple_app_ua(kwargs)
@@ -146,7 +157,8 @@ class Device(object):
     def use_apple_app_ua(self, kwargs):
         cfnetwork_version = kwargs.get('cfnetwork_version')
         darwin_version = kwargs.get('darwin_version')
-        self.os_name, self.os_version = find_apple_data(APPLE_DATA, cfnetwork_version=cfnetwork_version, darwin_version=darwin_version)
+        self.os_name, self.os_version = find_apple_data(
+            APPLE_DATA, cfnetwork_version=cfnetwork_version, darwin_version=darwin_version)
         self.characteristics['os_version'] = self.os_version
 
 
