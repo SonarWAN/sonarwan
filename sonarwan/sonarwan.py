@@ -12,6 +12,9 @@ import streams
 import utils
 
 
+USER_AGENT_PATTERNS_FILE = './user_agents.patterns'
+
+
 def is_query(pkg):
     return not hasattr(pkg.dns, 'a')
 
@@ -146,21 +149,19 @@ class Device(object):
         self.os_name, self.os_version = find_apple_data(APPLE_DATA, cfnetwork_version=cfnetwork_version, darwin_version=darwin_version)
         self.characteristics['os_version'] = self.os_version
 
-USER_AGENT_PATTERNS = [
-    r'(?P<app_name>[^\\]+)((\/(?P<app_version>[\d\.]+))|( \(unknown version\))) CFNetwork\/(?P<cfnetwork_version>[\d\.]+) Darwin\/(?P<darwin_version>[\d\.]+)',
-    r'(?P<app_name>[^\/]+)\/(?P<app_version>[\d\.]+) \((?P<model>[^;]+); (?P<os_version>[\d\.]+); (?P<build>[^;]+); (?P<framework>[^\)]+)\)'
-]
-
 
 class Environment(object):
 
-    def __init__(self):
+    def __init__(self, config):
         self.devices = []
         self.functions = {
             'http': self.__http_handler,
             # 'dns': self.__dns_handler,
             # 'ssl': self.__ssl_handler,
         }
+
+        if 'user_agent_patterns' in config:
+            self.user_agent_patterns = config['user_agent_patterns']
 
     def prepare(self):
         self.map = {
@@ -215,7 +216,7 @@ class Environment(object):
     def analyze_user_agent(self, user_agent):
         device = None
 
-        for pattern in USER_AGENT_PATTERNS:
+        for pattern in self.user_agent_patterns:
             match = re.match(pattern, user_agent)
             if match:
                 groups = match.groupdict()
@@ -283,27 +284,37 @@ class Environment(object):
 
 class SonarWan(object):
 
-    def __init__(self, environment):
-        self.environment = environment
+    def __init__(self):
+        self.environment = Environment(config=self.get_config())
         self.i = 0
+
+    def get_config(self):
+        with open(USER_AGENT_PATTERNS_FILE) as f:
+            user_agent_patterns = f.read().splitlines()
+
+        return {
+            'user_agent_patterns': user_agent_patterns
+        }
 
     def analyze(self, path):
         cap = pyshark.FileCapture(path)
-        env.prepare()
+        self.environment.prepare()
 
         for pkg in cap:
             self.i += 1
             utils.show_progress(self.i)
-            env.update(pkg)
+            self.environment.update(pkg)
         print()
+
+    def pretty_print(self):
+        self.environment.pretty_print()
 
 
 if __name__ == '__main__':
     start_time = time.time()
-    env = Environment()
-    reader = SonarWan(environment=env)
+    reader = SonarWan()
     for arg in sys.argv[1:]:
         reader.analyze(arg)
 
-    env.pretty_print()
+    reader.pretty_print()
     print('Execution time: {}'.format((time.time() - start_time)))
