@@ -98,9 +98,9 @@ class Device(object):
         if self._os_version is None or len(value) > len(self._os_version):
             self._os_version = value
 
-    def similarity(self, k, v):
-        if k in self.characteristics:
-            compare_value = self.characteristics[k]
+    def similarity(self, characteristics, k, v):
+        if k in characteristics:
+            compare_value = characteristics[k]
             length = min(len(compare_value), len(v))
             count = 0
 
@@ -112,28 +112,29 @@ class Device(object):
             return count / max(len(compare_value), len(v))
         return 0
 
-    def match_score(self, **kwargs):
+    def match_score(self, device_args, app_args):
         args = kwargs.copy()
-        app_name = args.pop('app_name')
-        app_version = args.pop('app_version')
+
+        # app_name = args.pop('app_name')
+        # app_version = args.pop('app_version')
 
         score = 0
 
-        for k, v in args.items():
-            sim = self.similarity(k, v)
+        for k, v in device_args.items():
+            sim = self.similarity(self.characteristics, k, v)
             if sim == -1:
                 return -1
             score += sim
 
-        services = self.services.items()
-        score += 1 if (app_name, app_version) in services else 0
+        for service in self.services:
+            for k, v in app_args.items():
+                sim = self.similarity(service, k, v)
+                if sim != -1:
+                    score += sim
 
         return score
 
     def update(self, **kwargs):
-        app_name = kwargs.pop('app_name', None)
-        app_version = kwargs.pop('app_version', None)
-
         if app_name:
             # TODO: check that this is safe
             self.services[app_name] = app_version
