@@ -135,11 +135,11 @@ class Device(object):
         #     # TODO: check that this is safe
         #     self.services[app_name] = app_version
 
-        for k in self.characteristics:
-            current_value = self.characteristics[k]
+        for k in device_args:
+            current_value = self.characteristics.get(k)
             new_value = device_args.get(k)
 
-            if new_value and len(new_value) > len(current_value):
+            if (not current_value) or (new_value and len(new_value) > len(current_value)):
                 self.characteristics[k] = new_value
 
         services = []
@@ -257,7 +257,7 @@ class Environment(object):
                 groups = match.groupdict()
                 device_args, app_args = {}, {}
                 for k in groups:
-                    if not groups[k]:
+                    if groups[k]:
                         if k.startswith('app_'):
                             app_args[k[4:]] = groups[k]
                         else:
@@ -316,7 +316,7 @@ class Environment(object):
 
     def pretty_print(self):
         for d in self.devices:
-            print('Device: {}'.format(d))
+            print('Device: {}'.format(d.characteristics))
             for s in d.streams:
                 print('\tStream {}: {}'.format(s.get_type(), s))
                 print('Services:')
