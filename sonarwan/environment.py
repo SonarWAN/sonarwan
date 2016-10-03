@@ -85,7 +85,6 @@ class Environment(object):
     def create_or_update_device(self, device_args, app_args):
         devices = []
         max_score = float('-inf')
-
         for d in self.devices:
             score = d.match_score(device_args, app_args)
             if score == max_score:

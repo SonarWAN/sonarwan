@@ -106,10 +106,15 @@ class Device(object):
         max_score = float('-inf')
 
         for service in self.services:
+            score = 0
+            incompatible = False
             for k, v in app_args.items():
-                score = self.similarity(service, k, v)
-                if score == -1:
-                    break
+                sim = self.similarity(service, k, v)
+                if sim == -1:
+                    incompatible = True
+                else:
+                    score += sim
+            if not incompatible:
                 if score == max_score:
                     services.append(service)
                 elif score > max_score:
