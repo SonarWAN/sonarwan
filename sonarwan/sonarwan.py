@@ -10,7 +10,6 @@ import paths
 
 
 class SonarWan(object):
-
     def __init__(self):
         self.environment = Environment(config=self.get_config())
         self.i = 0
@@ -19,9 +18,7 @@ class SonarWan(object):
         with open(paths.USER_AGENT_PATTERNS_FILE) as f:
             user_agent_patterns = f.read().splitlines()
 
-        return {
-            'user_agent_patterns': user_agent_patterns
-        }
+        return {'user_agent_patterns': user_agent_patterns}
 
     def analyze(self, path):
         cap = pyshark.FileCapture(path)

@@ -7,8 +7,6 @@ import streams
 import random
 
 
-
-
 def is_query(pkg):
     return not hasattr(pkg.dns, 'a')
 
@@ -24,8 +22,12 @@ def is_client_hello(pkg):
 
 def create_stream_dict(pkg):
     transport_pkg = pkg.udp if hasattr(pkg, 'udp') else pkg.tcp
-    return {'ip_src': pkg.ip.src, 'ip_dst': pkg.ip.dst,
-            'port_src': transport_pkg.srcport, 'port_dst': transport_pkg.dstport}
+    return {
+        'ip_src': pkg.ip.src,
+        'ip_dst': pkg.ip.dst,
+        'port_src': transport_pkg.srcport,
+        'port_dst': transport_pkg.dstport
+    }
 
 
 def get_cipher_suite(pkg):
@@ -40,7 +42,6 @@ class Transport(Enum):
 
 
 class Environment(object):
-
     def __init__(self, config):
         self.devices = []
         self.functions = {
@@ -132,8 +133,8 @@ class Environment(object):
             device, stream = self.locate(pkg)
         except LookupError:
             if is_request(pkg):
-                stream = streams.HTTPStream(
-                pkg.tcp.stream, **create_stream_dict(pkg))
+                stream = streams.HTTPStream(pkg.tcp.stream,
+                                            **create_stream_dict(pkg))
 
                 if hasattr(pkg.http, 'user_agent'):
                     user_agent = pkg.http.user_agent
@@ -143,8 +144,8 @@ class Environment(object):
 
     def __dns_handler(self, pkg):
         if is_query(pkg):
-            stream = streams.DNSStream(
-                pkg.udp.stream, pkg.dns.qry_name, **create_stream_dict(pkg))
+            stream = streams.DNSStream(pkg.udp.stream, pkg.dns.qry_name,
+                                       **create_stream_dict(pkg))
             d = Device.from_stream(stream, pkg)
             self.devices.append(d)
             self.map[Transport.UDP][stream.number] = (d, stream)
@@ -158,9 +159,9 @@ class Environment(object):
             return
         except LookupError:
             if is_client_hello(pkg):
-                stream = streams.SSLStream(
-                    pkg.tcp.stream, get_cipher_suite(pkg),
-                    **create_stream_dict(pkg))
+                stream = streams.SSLStream(pkg.tcp.stream,
+                                           get_cipher_suite(pkg),
+                                           **create_stream_dict(pkg))
                 d = Device.from_stream(stream, pkg)
                 self.devices.append(d)
                 self.map[Transport.TCP][stream.number] = (d, stream)
@@ -176,4 +177,3 @@ class Environment(object):
                 print('Services:')
             for service in d.services:
                 print('\t {}'.format(service))
-

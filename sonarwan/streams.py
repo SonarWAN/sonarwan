@@ -1,5 +1,4 @@
 class Stream(object):
-
     def __init__(self, number, **kwargs):
         self.number = number
         self.ip_src = kwargs['ip_src']
@@ -20,13 +19,11 @@ class Stream(object):
 
 
 class UDPStream(Stream):
-
     def __init__(self, number, **kwargs):
         super().__init__(number, **kwargs)
 
 
 class DNSStream(UDPStream):
-
     def __init__(self, number, domain_name, **kwargs):
         super().__init__(number, **kwargs)
         self.domain_name = domain_name
@@ -39,13 +36,11 @@ class DNSStream(UDPStream):
 
 
 class TCPStream(Stream):
-
     def __init__(self, number, **kwargs):
         super().__init__(number, **kwargs)
 
 
 class HTTPStream(TCPStream):
-
     def __init__(self, number, **kwargs):
         super().__init__(number, **kwargs)
 
@@ -54,7 +49,6 @@ class HTTPStream(TCPStream):
 
 
 class SSLStream(TCPStream):
-
     def __init__(self, number, cipher_suite=[], **kwargs):
         super().__init__(number, **kwargs)
         self.cipher_suite = cipher_suite

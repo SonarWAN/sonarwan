@@ -3,34 +3,33 @@ import random
 
 import paths
 
+
 def apple_data():
-    with open(paths.INFERENCE_DIR+'apple_inference.csv') as f:
+    with open(paths.INFERENCE_DIR + 'apple_inference.csv') as f:
         csvreader = csv.DictReader(f, delimiter=";")
         return list(csvreader)
 
+
 APPLE_DATA = apple_data()
+
 
 def find_apple_data(data, cfnetwork_version=None, darwin_version=None):
     if cfnetwork_version:
-        data = (
-            row for row in data
-            if row['CFNetwork Version number'].split('/')[1] == cfnetwork_version
-        )
+        data = (row for row in data
+                if row['CFNetwork Version number'].split('/')[1] ==
+                cfnetwork_version)
     if darwin_version:
-        data = (
-            row for row in data
-            if row['Darwin Version'].split('/')[1] == darwin_version
-        )
-    return next((row['OS Version'].rsplit(' ', 1) for row in data), (None,None))
-
+        data = (row for row in data
+                if row['Darwin Version'].split('/')[1] == darwin_version)
+    return next((row['OS Version'].rsplit(' ', 1)
+                 for row in data), (None, None))
 
 
 class Device(object):
-
     def __init__(self):
         self.model = None
         self.streams = []  # List of Streams
-        self.services = [] # List of characteristics
+        self.services = []  # List of characteristics
         self.characteristics = {}
         self._os_version = None
         self.os_name = None
@@ -99,7 +98,8 @@ class Device(object):
             current_value = self.characteristics.get(k)
             new_value = device_args.get(k)
 
-            if (not current_value) or (new_value and len(new_value) > len(current_value)):
+            if (not current_value) or (new_value and
+                                       len(new_value) > len(current_value)):
                 self.characteristics[k] = new_value
 
         services = []
@@ -125,7 +125,6 @@ class Device(object):
                     service[k] = new_value
         else:
             self.services.append(app_args.copy())
-            
 
         # TODO inferenca
         if 'cfnetwork_version' in device_args or 'darwin_version' in device_args:
@@ -141,5 +140,7 @@ class Device(object):
         cfnetwork_version = kwargs.get('cfnetwork_version')
         darwin_version = kwargs.get('darwin_version')
         self.os_name, self.os_version = find_apple_data(
-            APPLE_DATA, cfnetwork_version=cfnetwork_version, darwin_version=darwin_version)
+            APPLE_DATA,
+            cfnetwork_version=cfnetwork_version,
+            darwin_version=darwin_version)
         self.characteristics['os_version'] = self.os_version
