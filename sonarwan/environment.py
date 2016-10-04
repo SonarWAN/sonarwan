@@ -124,8 +124,8 @@ class Environment(object):
                     user_agent = pkg.http.user_agent
                     device = self.analyze_user_agent(user_agent)
 
-                if device:
-                    self.map[Transport.TCP][stream.number] = (device, stream)
+                    if device:
+                        self.map[Transport.TCP][stream.number] = (device, stream)
 
     def __dns_handler(self, pkg):
         if is_query(pkg):

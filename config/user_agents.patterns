@@ -2,8 +2,21 @@
 
 (?P<app_name>[^\\]+)((\/(?P<app_version>[\d\.]+))|( \(unknown version\))) CFNetwork\/(?P<cfnetwork_version>[\d\.]+) Darwin\/(?P<darwin_version>[\d\.]+)
 (?P<app_name>[^\/]+)\/(?P<app_version>[\d\.]+) \((?P<model>[^;]+); (?P<os_version>[\d\.]+); (?P<build>[^;]+); (?P<framework>[^\)]+)\)
+Mozilla/5.0 \((?P<model>[\w]+); CPU OS 8_0 like Mac OS X\) AppleWebKit\/(?P<app_chrome_web_kit>[\d\.]+) \(KHTML, like Gecko\) Version\/(?P<os_version>[\d\.]+) Mobile/(?P<build>[\w]+) Safari/[\d\.]+
+(?P<model>[\w\,\ ]+)\/(?P<os_version>[\d\.]+) \((?P<build>[\w]+)\)
+(?P<model>[\w\,\ \+]+)\/(?P<os_version>[\d\.]+) \((?P<build>[\w]+)\) (?P<app_name>[\w\d]+)\/(?P<app_version>[\d\.]+)
 
 # Android
 
 Dalvik\/(?P<dalvik_version>[\d\.]+) \(Linux; U; Android (?P<android_version>[\d\.]+); (?P<model_name>(\w+)|(\w+\s\w+)+) Build\/(?P<build>[\w]+)\)
 Mozilla/5.0 \(Linux; Android (?P<android_version>[\d\.]+); (?P<model_name>(\w+)|(\w+\s\w+)+) Build\/(?P<build>[\w]+)\) AppleWebKit\/(?P<app_chrome_web_kit>[\d\.]+) \(KHTML, like Gecko\) Chrome\/(?P<app_chrome_version>[\d\.]+) Mobile Safari/[\d\.]+
+
+# Linux
+
+Mozilla/5.0 \(X11; (?P<brand>Linux) (?P<linux_system>[\w]+)\) AppleWebKit\/(?P<app_chrome_web_kit>[\d\.]+) \(KHTML, like Gecko\) Chrome\/(?P<app_chrome_version>[\d\.]+) Safari/[\d\.]+
+
+# Windows
+
+(?P<brand>[\w]+) NCSI
+Mozilla/5.0 \((?P<os_name>[\w\ ]+) (?P<os_version>[\d\.]+); WOW64; rv:[\d\.]+\) Gecko\/(?P<app_chrome_gecko_version>[\d\.]+) Firefox\/(?P<app_chrome_firefox_version>[\d\.]+)
+Microsoft\-CryptoAPI\/(?P<os_version>[\d\.]+)

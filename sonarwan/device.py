@@ -23,7 +23,7 @@ class Device(object):
             count = 0
 
             for i in range(length):
-                if compare_value[i] == v[i]:
+                if (not compare_value[i].isalnum() and not v[i].isalnum()) or compare_value[i] == v[i]:
                     count += 1
                 else:
                     return -1
