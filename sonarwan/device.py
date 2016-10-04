@@ -62,7 +62,6 @@ class Device(object):
         if inferences:
             self.characteristics.update(inferences)
 
-
         services = []
         max_score = float('-inf')
 
@@ -89,6 +88,6 @@ class Device(object):
 
                 if new_value and len(new_value) > len(current_value):
                     service[k] = new_value
-        else:
+        elif app_args:
             self.services.append(app_args.copy())
 

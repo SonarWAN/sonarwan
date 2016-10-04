@@ -83,7 +83,7 @@ class Environment(object):
 
     def create_or_update_device(self, device_args, app_args):
         devices = []
-        max_score = float('-inf')
+        max_score = 0
         for d in self.devices:
             score = d.match_score(device_args, app_args)
             if score == max_score:
@@ -103,7 +103,8 @@ class Environment(object):
         device = None
 
         matchers = self.ua_analyzer.get_best_match(user_agent)
-        device = self.create_or_update_device(matchers[0], matchers[1])
+        if matchers[0] or matchers[1]:
+            device = self.create_or_update_device(matchers[0], matchers[1])
 
         return device
 
@@ -123,7 +124,8 @@ class Environment(object):
                     user_agent = pkg.http.user_agent
                     device = self.analyze_user_agent(user_agent)
 
-                self.map[Transport.TCP][stream.number] = (device, stream)
+                if device:
+                    self.map[Transport.TCP][stream.number] = (device, stream)
 
     def __dns_handler(self, pkg):
         if is_query(pkg):

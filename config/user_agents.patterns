@@ -1,2 +1,9 @@
+# iOS
+
 (?P<app_name>[^\\]+)((\/(?P<app_version>[\d\.]+))|( \(unknown version\))) CFNetwork\/(?P<cfnetwork_version>[\d\.]+) Darwin\/(?P<darwin_version>[\d\.]+)
 (?P<app_name>[^\/]+)\/(?P<app_version>[\d\.]+) \((?P<model>[^;]+); (?P<os_version>[\d\.]+); (?P<build>[^;]+); (?P<framework>[^\)]+)\)
+
+# Android
+
+Dalvik\/(?P<dalvik_version>[\d\.]+) \(Linux; U; Android (?P<android_version>[\d\.]+); (?P<model_name>(\w+)|(\w+\s\w+)+) Build\/(?P<build>[\w]+)\)
+Mozilla/5.0 \(Linux; Android (?P<android_version>[\d\.]+); (?P<model_name>(\w+)|(\w+\s\w+)+) Build\/(?P<build>[\w]+)\) AppleWebKit\/(?P<app_chrome_web_kit>[\d\.]+) \(KHTML, like Gecko\) Chrome\/(?P<app_chrome_version>[\d\.]+) Mobile Safari/[\d\.]+
