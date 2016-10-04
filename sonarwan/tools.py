@@ -55,8 +55,12 @@ class UserAgentAnalyzer(object):
         self.user_agents = self.get_config()
 
     def get_config(self):
+        user_agent_patterns = []
+
         with open(paths.USER_AGENT_PATTERNS_FILE) as f:
-            user_agent_patterns = f.read().splitlines()
+            for each in f.read().splitlines():
+                if each and each[0]!='#':
+                    user_agent_patterns.append(each)
 
         return user_agent_patterns
 
