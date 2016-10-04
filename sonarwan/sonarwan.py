@@ -12,7 +12,7 @@ import tools
 class SonarWan(object):
     def __init__(self):
 
-        self.environment = Environment(ua_analyzer=tools.UserAgentAnalyzer())
+        self.environment = Environment(ua_analyzer=tools.UserAgentAnalyzer(), inference_engine=tools.InferenceEngine())
         self.i = 0
 
     def analyze(self, path):

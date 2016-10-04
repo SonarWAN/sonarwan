@@ -41,7 +41,7 @@ class Transport(Enum):
 
 
 class Environment(object):
-    def __init__(self, ua_analyzer):
+    def __init__(self, ua_analyzer, inference_engine):
         self.devices = []
         self.functions = {
             'http': self.__http_handler,
@@ -50,6 +50,7 @@ class Environment(object):
         }
 
         self.ua_analyzer = ua_analyzer
+        self.inference_engine = inference_engine
 
     def prepare(self):
         self.map = {
@@ -76,7 +77,7 @@ class Environment(object):
         return t
 
     def create_device(self):
-        device = Device()
+        device = Device(self.inference_engine)
         self.devices.append(device)
         return device
 
