@@ -2,9 +2,9 @@ from enum import Enum
 
 from device import Device
 
-import re
 import streams
 import random
+
 
 
 def is_query(pkg):
@@ -42,7 +42,7 @@ class Transport(Enum):
 
 
 class Environment(object):
-    def __init__(self, config):
+    def __init__(self, ua_analyzer):
         self.devices = []
         self.functions = {
             'http': self.__http_handler,
@@ -50,8 +50,7 @@ class Environment(object):
             # 'ssl': self.__ssl_handler,
         }
 
-        if 'user_agent_patterns' in config:
-            self.user_agent_patterns = config['user_agent_patterns']
+        self.ua_analyzer = ua_analyzer
 
     def prepare(self):
         self.map = {
@@ -105,18 +104,8 @@ class Environment(object):
     def analyze_user_agent(self, user_agent):
         device = None
 
-        for pattern in self.user_agent_patterns:
-            match = re.match(pattern, user_agent)
-            if match:
-                groups = match.groupdict()
-                device_args, app_args = {}, {}
-                for k in groups:
-                    if groups[k]:
-                        if k.startswith('app_'):
-                            app_args[k[4:]] = groups[k]
-                        else:
-                            device_args[k] = groups[k]
-                device = self.create_or_update_device(device_args, app_args)
+        matchers = self.ua_analyzer.get_best_match(user_agent)
+        device = self.create_or_update_device(matchers[0], matchers[1])
 
         if not device:
             device = self.create_device()
