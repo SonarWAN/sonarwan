@@ -1,15 +1,13 @@
 import paths
 import re
 
-class InferenceEngine(object):
 
+class InferenceEngine(object):
     def __init__(self):
         pass
 
 
-
 class UserAgentAnalyzer(object):
-
     def __init__(self):
         self.user_agents = self.get_config()
 
@@ -31,7 +29,7 @@ class UserAgentAnalyzer(object):
                     best_match = groups
 
         device_args, app_args = {}, {}
-        if best_match: 
+        if best_match:
             for k in best_match:
                 if best_match[k]:
                     if k.startswith('app_'):

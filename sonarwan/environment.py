@@ -6,7 +6,6 @@ import streams
 import random
 
 
-
 def is_query(pkg):
     return not hasattr(pkg.dns, 'a')
 
@@ -99,16 +98,11 @@ class Environment(object):
         device.update(device_args, app_args)
         return device
 
-        device = random.choice(deviceN)
-
     def analyze_user_agent(self, user_agent):
         device = None
 
         matchers = self.ua_analyzer.get_best_match(user_agent)
         device = self.create_or_update_device(matchers[0], matchers[1])
-
-        if not device:
-            device = self.create_device()
 
         return device
 
