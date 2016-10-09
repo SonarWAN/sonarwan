@@ -23,7 +23,8 @@ class Device(object):
             count = 0
 
             for i in range(length):
-                if (not compare_value[i].isalnum() and not v[i].isalnum()) or compare_value[i] == v[i]:
+                if (not compare_value[i].isalnum() and
+                        not v[i].isalnum()) or compare_value[i] == v[i]:
                     count += 1
                 else:
                     return -1
@@ -58,7 +59,8 @@ class Device(object):
                                        len(new_value) > len(current_value)):
                 self.characteristics[k] = new_value
 
-        inferences = self.inference_engine.analyze_inference(self.characteristics)
+        inferences = self.inference_engine.analyze_inference(
+            self.characteristics)
         if inferences:
             self.characteristics.update(inferences)
 
@@ -90,4 +92,3 @@ class Device(object):
                     service[k] = new_value
         elif app_args:
             self.services.append(app_args.copy())
-
