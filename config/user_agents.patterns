@@ -2,7 +2,8 @@
 
 (?P<app_name>[^\\]+)((\/(?P<app_version>[\d\.]+))|( \(unknown version\))) CFNetwork\/(?P<cfnetwork_version>[\d\.]+) Darwin\/(?P<darwin_version>[\d\.]+)
 (?P<app_name>[^\/]+)\/(?P<app_version>[\d\.]+) \((?P<model>[^;]+); (?P<os_version>[\d\.]+); (?P<build>[^;]+); (?P<framework>[^\)]+)\)
-Mozilla/5.0 \((?P<model>[\w]+); CPU OS 8_0 like Mac OS X\) AppleWebKit\/(?P<app_chrome_web_kit>[\d\.]+) \(KHTML, like Gecko\) Version\/(?P<os_version>[\d\.]+) Mobile/(?P<build>[\w]+) Safari/[\d\.]+
+Mozilla/5.0 \((?P<model>[\w]+); CPU[\w\ ]+ like Mac OS X\) AppleWebKit\/(?P<app_chrome_web_kit>[\d\.]+) \(KHTML, like Gecko\) Version\/(?P<os_version>[\d\.]+) Mobile/(?P<build>[\w]+) Safari/[\d\.]+
+Mozilla/5.0 \((?P<model>[\w]+); Intel Mac OS X (?P<os_version>[\w]+)\) AppleWebKit\/(?P<app_chrome_web_kit>[\d\.]+) \(KHTML, like Gecko\) Chrome\/(?P<app_chrome_version>[\d\.]+) Safari/[\d\.]+
 (?P<model>[\w\,\ ]+)\/(?P<os_version>[\d\.]+) \((?P<build>[\w]+)\)
 (?P<model>[\w\,\ \+]+)\/(?P<os_version>[\d\.]+) \((?P<build>[\w]+)\) (?P<app_name>[\w\d]+)\/(?P<app_version>[\d\.]+)
 

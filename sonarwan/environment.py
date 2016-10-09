@@ -86,7 +86,7 @@ class Environment(object):
         max_score = 0
         for d in self.devices:
             score = d.match_score(device_args, app_args)
-            if score == max_score:
+            if max_score > 0 and score == max_score:
                 devices.append(d)
             elif score > max_score:
                 max_score, devices = score, [d]

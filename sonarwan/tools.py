@@ -26,13 +26,27 @@ class InferenceEngine(object):
         ret = {}
         for each in candidates:
             for k,v in each.items():
-                if k in ret.keys() and v!=ret[k]:
-                    non_deterministic.add(k)
+                if k in ret.keys():
+                    common = InferenceEngine.common_initial_substring(v, ret[k])
+                    if common:
+                        ret[k] = common
+                    else:
+                        non_deterministic.add(k)
                 else:
                     ret[k] = v
         for each in non_deterministic:
             del ret[each]
         
+        return ret
+
+    def common_initial_substring(s1, s2):
+        min_len = min(len(s1),len(s2))
+        ret = ''
+        for i in range(min_len):
+            if s1[i] != s2[i]:
+                return ret
+            else:
+                ret+=s1[i]
         return ret
         
     def useful_data(characteristics, base):
@@ -87,7 +101,7 @@ class UserAgentAnalyzer(object):
 
 if __name__ == '__main__':
     ie = InferenceEngine()
-    c = {'build': '12A365', 'os_version': '8.0', 'model': 'iPad4,4', 'cfnetwork_version': '711.0.6', 'framework': 'GameKit-194.14'}
+    c = {'cfnetwork_version': '711.0.6', 'darwin_version':'14.0.0'}
     # {'build': '12A365', 'os_version': '8.0', 'darwin_version': '14.0.0', 'model': 'iPad4,4', 'cfnetwork_version': '711.0.6', 'framework': 'GameKit-194.14'}
     ret = ie.analyze_inference(c)
     print(ret)
