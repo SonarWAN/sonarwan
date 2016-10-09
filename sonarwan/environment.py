@@ -67,8 +67,9 @@ class HTTPHandler(Handler):
         if hasattr(pkg.http, 'user_agent'):
             user_agent = pkg.http.user_agent
             device = self.analyze_user_agent(user_agent)
-
             if device:
+                device.streams.append(stream)
+
                 self.environment.map[Transport.TCP][stream.number] = (device,
                                                                       stream)
 
@@ -173,8 +174,8 @@ class Environment(object):
     def pretty_print(self):
         for d in self.devices:
             print('Device: {}'.format(d.characteristics))
-            for s in d.streams:
-                print('\tStream {}: {}'.format(s.get_type(), s))
-                print('Services:')
+            # for s in d.streams:
+            #     print('\tStream {}: {}'.format(s.get_type(), s))
+            print('Services:')
             for service in d.services:
                 print('\t {}'.format(service))
