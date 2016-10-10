@@ -4,6 +4,7 @@ import csv
 from os import listdir
 from os.path import isfile, join
 
+from ua_parser import user_agent_parser
 
 class InferenceEngine(object):
     def __init__(self):
@@ -49,7 +50,7 @@ class InferenceEngine(object):
         min_len = min(len(s1), len(s2))
         ret = ''
         for i in range(min_len):
-            if s1[i] != s2[i]:
+            if s1[i].upper() != s2[i].upper():
                 return ret
             else:
                 ret += s1[i]
@@ -106,7 +107,16 @@ class UserAgentAnalyzer(object):
                         app_args[k[4:]] = best_match[k]
                     elif k.startswith('DEV_'):
                         device_args[k[4:]] = best_match[k]
+
+        UserAgentAnalyzer.run_ua_parser(user_agent, device_args, app_args)
         return (device_args, app_args)
+
+    def run_ua_parser(user_agent, device_args, app_args):
+        parsed_string = user_agent_parser.Parse(user_agent)
+        if parsed_string['device']['brand'] and parsed_string['device']['brand']!='Other' and 'brand' not in device_args:
+            device_args['brand'] = parsed_string['device']['brand']
+        if parsed_string['os']['family'] and parsed_string['os']['family']!='Other' and 'os_family' not in device_args:
+            device_args['os_family'] = parsed_string['os']['family']
 
 
 if __name__ == '__main__':

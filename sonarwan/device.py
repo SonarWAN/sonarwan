@@ -24,7 +24,7 @@ class Device(object):
 
             for i in range(length):
                 if (not compare_value[i].isalnum() and
-                        not v[i].isalnum()) or compare_value[i] == v[i]:
+                        not v[i].isalnum()) or compare_value[i].upper() == v[i].upper():
                     count += 1
                 else:
                     return -1
