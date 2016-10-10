@@ -33,9 +33,9 @@ class SonarWan(object):
 
 if __name__ == '__main__':
     start_time = time.time()
-    reader = SonarWan()
+    sonarwan = SonarWan()
     for arg in sys.argv[1:]:
-        reader.analyze(arg)
+        sonarwan.analyze(arg)
 
-    reader.pretty_print()
+    sonarwan.pretty_print()
     print('Execution time: {}'.format((time.time() - start_time)))

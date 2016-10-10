@@ -102,10 +102,10 @@ class UserAgentAnalyzer(object):
         if best_match:
             for k in best_match:
                 if best_match[k]:
-                    if k.startswith('app_'):
+                    if k.startswith('APP_'):
                         app_args[k[4:]] = best_match[k]
-                    else:
-                        device_args[k] = best_match[k]
+                    elif k.startswith('DEV_'):
+                        device_args[k[4:]] = best_match[k]
         return (device_args, app_args)
 
 

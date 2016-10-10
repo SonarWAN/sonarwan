@@ -1,23 +1,61 @@
-# iOS
+#
+# USER AGENTS
+# 
+# DEV -> brand, model, version, os_family, os_version, os_brand, os_build, os_framework
+#
+# APP -> name, version
+#
+#
 
-(?P<app_name>[^\\]+)((\/(?P<app_version>[\d\.]+))|( \(unknown version\))) CFNetwork\/(?P<cfnetwork_version>[\d\.]+) Darwin\/(?P<darwin_version>[\d\.]+)
-(?P<app_name>[^\/]+)\/(?P<app_version>[\d\.]+) \((?P<model>[^;]+); (?P<os_version>[\d\.]+); (?P<build>[^;]+); (?P<framework>[^\)]+)\)
-Mozilla/5.0 \((?P<model>[\w]+); CPU[\w\ ]+ like Mac OS X\) AppleWebKit\/(?P<app_chrome_web_kit>[\d\.]+) \(KHTML, like Gecko\) Version\/(?P<os_version>[\d\.]+) Mobile/(?P<build>[\w]+) Safari/[\d\.]+
-Mozilla/5.0 \((?P<model>[\w]+); Intel Mac OS X (?P<os_version>[\w]+)\) AppleWebKit\/(?P<app_chrome_web_kit>[\d\.]+) \(KHTML, like Gecko\) Chrome\/(?P<app_chrome_version>[\d\.]+) Safari/[\d\.]+
-(?P<model>[\w\,\ ]+)\/(?P<os_version>[\d\.]+) \((?P<build>[\w]+)\)
-(?P<model>[\w\,\ \+]+)\/(?P<os_version>[\d\.]+) \((?P<build>[\w]+)\) (?P<app_name>[\w\d]+)\/(?P<app_version>[\d\.]+)
 
+#######################################################################################################################################################
+# iOS/Mac OSX
+
+# Clash%20of%20Clans/8.332.16 CFNetwork/711.0.6 Darwin/14.0.0
+(?P<APP_name>[^\\]+)((\/(?P<APP_version>[\d\.]+))|( \(unknown version\))) CFNetwork\/(?P<DEV_cfnetwork_version>[\d\.]+) Darwin\/(?P<DEV_darwin_version>[\d\.]+)
+
+# gamed/4.10.18.4.6.15.5.3.2 (iPad4,4; 8.0; 12A365; GameKit-194.14)
+(?P<APP_name>[^\/]+)\/(?P<APP_version>[\d\.]+) \(((?P<DEV_model>[a-zA-Z]+)(?P<DEV_version>[\d\,]+)); (?P<DEV_os_version>[\d\.]+); (?P<DEV_os_build>[^;]+); (?P<DEV_os_framework>[^\)]+)\)
+
+# Mozilla/5.0 (iPad; CPU OS 8_0 like Mac OS X) AppleWebKit/600.1.4 (KHTML, like Gecko) Version/8.0 Mobile/12A365 Safari/600.1.4
+Mozilla/5.0 \((?P<DEV_family>[\w]+); CPU[\w\ ]+ like Mac OS X\) AppleWebKit\/(?P<APP_chrome_webkit>[\d\.]+) \(KHTML, like Gecko\) Version\/(?P<APP_os_version>[\d\.]+) Mobile/(?P<DEV_os_build>[\w]+) Safari/[\d\.]+
+
+# Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36
+Mozilla/5.0 \((?P<DEV_family>[\w]+); Intel (?P<DEV_os_family>Mac OS X) (?P<APP_os_version>[\w]+)\) AppleWebKit\/(?P<APP_chrome_webkit>[\d\.]+) \(KHTML, like Gecko\) (?P<APP_name>Chrome)\/(?P<APP_chrome_version>[\d\.]+) Safari/[\d\.]+
+
+# iPad4,4/8.0 (12A365)
+(?P<DEV_model>[a-zA-z]+)(?P<DEV_version>[\d\,]+)\/(?P<DEV_os_version>[\d\.]+) \((?P<DEV_os_build>[\w]+)\)
+
+# Mac OS X/10.11.4 (15E65)
+(?P<DEV_model>[\w\ ]+)\/(?P<DEV_os_version>[\d\.]+) \((?P<DEV_os_build>[\w]+)\)
+
+# Mac+OS+X/10.11.4 (15E65) CalendarAgent/361.2
+(?P<DEV_model>[\w\+]+)\/(?P<DEV_os_version>[\d\.]+) \((?P<DEV_os_build>[\w]+)\) (?P<APP_name>[\w\d]+)\/(?P<APP_version>[\d\.]+)
+
+#######################################################################################################################################################
 # Android
 
-Dalvik\/(?P<dalvik_version>[\d\.]+) \(Linux; U; Android (?P<android_version>[\d\.]+); (?P<model_name>(\w+)|(\w+\s\w+)+) Build\/(?P<build>[\w]+)\)
-Mozilla/5.0 \(Linux; Android (?P<android_version>[\d\.]+); (?P<model_name>(\w+)|(\w+\s\w+)+) Build\/(?P<build>[\w]+)\) AppleWebKit\/(?P<app_chrome_web_kit>[\d\.]+) \(KHTML, like Gecko\) Chrome\/(?P<app_chrome_version>[\d\.]+) Mobile Safari/[\d\.]+
+# Dalvik/2.1.0 (Linux; U; Android 6.0.1; Nexus 5 Build/MOB30M)
+Dalvik\/(?P<DEV_dalvik_version>[\d\.]+) \(Linux; U; (?P<DEV_os_family>Android) (?P<DEV_os_version>[\d\.]+); (?P<DEV_model>(\w+)|(\w+\s\w+)+) Build\/(?P<DEV_os_build>[\w]+)\)
 
+# Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5 Build/MOB30M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.81 Mobile Safari/537.36
+Mozilla/5.0 \(Linux; (?P<DEV_os_family>Android) (?P<DEV_os_version>[\d\.]+); (?P<DEV_model>(\w+)|(\w+\s\w+)+) Build\/(?P<DEV_os_build>[\w]+)\) AppleWebKit\/(?P<APP_chrome_webkit>[\d\.]+) \(KHTML, like Gecko\) (?P<APP_name>Chrome)\/(?P<APP_chrome_version>[\d\.]+) Mobile Safari/[\d\.]+
+
+#######################################################################################################################################################
 # Linux
 
-Mozilla/5.0 \(X11; (?P<brand>Linux) (?P<linux_system>[\w]+)\) AppleWebKit\/(?P<app_chrome_web_kit>[\d\.]+) \(KHTML, like Gecko\) Chrome\/(?P<app_chrome_version>[\d\.]+) Safari/[\d\.]+
+# Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.29 Safari/537.36
+Mozilla/5.0 \(X11; (?P<DEV_os_family>Linux) (?P<DEV_system_architecture>[\w]+)\) AppleWebKit\/(?P<APP_chrome_webkit>[\d\.]+) \(KHTML, like Gecko\) (?P<APP_name>Chrome)\/(?P<APP_chrome_version>[\d\.]+) Safari/[\d\.]+
 
+#######################################################################################################################################################
 # Windows
 
-(?P<brand>[\w]+) NCSI
-Mozilla/5.0 \((?P<os_name>[\w\ ]+) (?P<os_version>[\d\.]+); WOW64; rv:[\d\.]+\) Gecko\/(?P<app_chrome_gecko_version>[\d\.]+) Firefox\/(?P<app_chrome_firefox_version>[\d\.]+)
-Microsoft\-CryptoAPI\/(?P<os_version>[\d\.]+)
+# Microsoft NCSI
+(?P<DEV_os_brand>[\w]+) NCSI
+
+# Mozilla/5.0 (Windows NT 10.0; WOW64; rv:48.0) Gecko/20100101 Firefox/48.0
+Mozilla/5.0 \((?P<DEV_os_family>[\w]+) NT (?P<DEV_os_version>[\d\.]+); WOW64; rv:[\d\.]+\) Gecko\/(?P<app_chrome_gecko_version>[\d\.]+) Firefox\/(?P<app_chrome_firefox_version>[\d\.]+)
+
+# Microsoft-CryptoAPI/10.0
+(?P<DEV_os_brand>Microsoft)\-CryptoAPI\/(?P<DEV_os_version>[\d\.]+)
+#######################################################################################################################################################

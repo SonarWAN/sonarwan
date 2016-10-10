@@ -110,7 +110,6 @@ class Environment(object):
             # 'dns': self.__dns_handler,
             # 'ssl': self.__ssl_handler,
         }
-
         self.ua_analyzer = ua_analyzer
         self.inference_engine = inference_engine
 
