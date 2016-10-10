@@ -27,10 +27,10 @@ Mozilla/5.0 \((?P<DEV_family>[\w]+); Intel (?P<DEV_os_family>Mac OS X) (?P<APP_o
 (?P<DEV_model>[a-zA-z]+)(?P<DEV_version>[\d\,]+)\/(?P<DEV_os_version>[\d\.]+) \((?P<DEV_os_build>[\w]+)\)
 
 # Mac OS X/10.11.4 (15E65)
-(?P<DEV_model>[\w\ ]+)\/(?P<DEV_os_version>[\d\.]+) \((?P<DEV_os_build>[\w]+)\)
+(?P<DEV_os_family>[\w\ ]+)\/(?P<DEV_os_version>[\d\.]+) \((?P<DEV_os_build>[\w]+)\)
 
-# Mac+OS+X/10.11.4 (15E65) CalendarAgent/361.2
-(?P<DEV_model>[\w\+]+)\/(?P<DEV_os_version>[\d\.]+) \((?P<DEV_os_build>[\w]+)\) (?P<APP_name>[\w\d]+)\/(?P<APP_version>[\d\.]+)
+# iOS/9.3.1 (13E238) dataaccessd/1.0
+(?P<DEV_os_family>[\w\+]+)\/(?P<DEV_os_version>[\d\.]+) \((?P<DEV_os_build>[\w]+)\) (?P<APP_name>[\w\d]+)\/(?P<APP_version>[\d\.]+)
 
 #######################################################################################################################################################
 # Android
