@@ -18,10 +18,10 @@
 (?P<APP_name>[^\/]+)\/(?P<APP_version>[\d\.]+) \(((?P<DEV_model>[a-zA-Z]+)(?P<DEV_version>[\d\,]+)); (?P<DEV_os_version>[\d\.]+); (?P<DEV_os_build>[^;]+); (?P<DEV_os_framework>[^\)]+)\)
 
 # Mozilla/5.0 (iPad; CPU OS 8_0 like Mac OS X) AppleWebKit/600.1.4 (KHTML, like Gecko) Version/8.0 Mobile/12A365 Safari/600.1.4
-Mozilla/5.0 \((?P<DEV_family>[\w]+); CPU[\w\ ]+ like Mac OS X\) AppleWebKit\/(?P<APP_chrome_webkit>[\d\.]+) \(KHTML, like Gecko\) Version\/(?P<APP_os_version>[\d\.]+) Mobile/(?P<DEV_os_build>[\w]+) Safari/[\d\.]+
+Mozilla/5.0 \((?P<DEV_model>[\w]+); CPU[\w\ ]+ (?P<DEV_os_version>[\w_]+) like Mac OS X\) AppleWebKit\/(?P<APP_chrome_webkit>[\d\.]+) \(KHTML, like Gecko\) Version\/(?P<APP_os_version>[\d\.]+) Mobile/(?P<DEV_os_build>[\w]+) Safari/[\d\.]+
 
 # Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36
-Mozilla/5.0 \((?P<DEV_family>[\w]+); Intel (?P<DEV_os_family>Mac OS X) (?P<APP_os_version>[\w]+)\) AppleWebKit\/(?P<APP_chrome_webkit>[\d\.]+) \(KHTML, like Gecko\) (?P<APP_name>Chrome)\/(?P<APP_chrome_version>[\d\.]+) Safari/[\d\.]+
+Mozilla/5.0 \((?P<DEV_family>[\w]+); Intel (?P<DEV_os_family>Mac OS X) (?P<DEV_os_version>[\w]+)\) AppleWebKit\/(?P<APP_chrome_webkit>[\d\.]+) \(KHTML, like Gecko\) (?P<APP_name>Chrome)\/(?P<APP_chrome_version>[\d\.]+) Safari/[\d\.]+
 
 # iPad4,4/8.0 (12A365)
 (?P<DEV_model>[a-zA-z]+)(?P<DEV_version>[\d\,]+)\/(?P<DEV_os_version>[\d\.]+) \((?P<DEV_os_build>[\w]+)\)
