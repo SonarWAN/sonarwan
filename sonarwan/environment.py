@@ -175,6 +175,6 @@ class Environment(object):
             print('Device: {}'.format(d.characteristics))
             # for s in d.streams:
             #     print('\tStream {}: {}'.format(s.get_type(), s))
-            print('Services:')
+            print('\tServices:')
             for service in d.services:
-                print('\t {}'.format(service))
+                print('\t\t{}'.format(service.characteristics))

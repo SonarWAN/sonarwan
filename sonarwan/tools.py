@@ -6,6 +6,7 @@ from os.path import isfile, join
 
 from ua_parser import user_agent_parser
 
+
 class InferenceEngine(object):
     def __init__(self):
         self.load_inference_files()
@@ -113,9 +114,11 @@ class UserAgentAnalyzer(object):
 
     def run_ua_parser(user_agent, device_args, app_args):
         parsed_string = user_agent_parser.Parse(user_agent)
-        if parsed_string['device']['brand'] and parsed_string['device']['brand']!='Other' and 'brand' not in device_args:
+        if parsed_string['device']['brand'] and parsed_string['device'][
+                'brand'] != 'Other' and 'brand' not in device_args:
             device_args['brand'] = parsed_string['device']['brand']
-        if parsed_string['os']['family'] and parsed_string['os']['family']!='Other' and 'os_family' not in device_args:
+        if parsed_string['os']['family'] and parsed_string['os'][
+                'family'] != 'Other' and 'os_family' not in device_args:
             device_args['os_family'] = parsed_string['os']['family']
 
 
