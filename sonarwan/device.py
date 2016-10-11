@@ -38,11 +38,11 @@ class Device(object):
         self.streams = []  # List of Streams
         self.services = []  # List of characteristics
         self.characteristics = {}
+        self.activity = []
 
         self.inference_engine = inference_engine
 
     def match_score(self, device_args, app_args):
-
         score = 0
 
         for k, v in device_args.items():
@@ -59,11 +59,12 @@ class Device(object):
 
         return score
 
-    def update(self, device_args, app_args):
+    def update(self, device_args, app_args, activity_time):
         self.update_device(device_args)
-        self.update_services(app_args)
+        self.activity.append(activity_time)
+        self.update_services(app_args, activity_time)
 
-    def update_services(self, app_args):
+    def update_services(self, app_args, activity_time):
         services = []
         max_score = float('-inf')
 
@@ -83,14 +84,16 @@ class Device(object):
                         services.append(service)
                     elif score > max_score:
                         max_score, services = score, [service]
+        service = None
         if services:
             service = random.choice(services)
-            service.update_service(app_args)
-
         elif app_args:
-            new_service = Service()
-            new_service.characteristics = app_args.copy()
-            self.services.append(new_service)
+            service = Service()
+            self.services.append(service)
+
+        if service:
+            service.update_service(app_args)
+            service.activity.append(activity_time)
 
     def update_device(self, device_args):
         for k in device_args:

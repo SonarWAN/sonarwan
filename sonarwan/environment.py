@@ -66,14 +66,9 @@ class HTTPHandler(Handler):
 
         if hasattr(pkg.http, 'user_agent'):
             user_agent = pkg.http.user_agent
-            device = self.analyze_user_agent(user_agent)
-            if device:
-                device.streams.append(stream)
+            self.analyze_user_agent(user_agent, stream, pkg.sniff_time)
 
-                self.environment.map[Transport.TCP][stream.number] = (device,
-                                                                      stream)
-
-    def create_or_update_device(self, device_args, app_args):
+    def create_or_update_device(self, device_args, app_args, activity_time):
         devices = []
         max_score = 0
         for d in self.environment.devices:
@@ -88,17 +83,20 @@ class HTTPHandler(Handler):
         else:
             device = self.environment.create_device()
 
-        device.update(device_args, app_args)
+        device.update(device_args, app_args, activity_time)
         return device
 
-    def analyze_user_agent(self, user_agent):
-        device = None
+    def analyze_user_agent(self, user_agent, stream, activity_time):
 
         matchers = self.environment.ua_analyzer.get_best_match(user_agent)
-        if matchers[0] or matchers[1]:
-            device = self.create_or_update_device(matchers[0], matchers[1])
+        if matchers.get('device_args') or matchers.get('app_args'):
+            device = self.create_or_update_device(
+                matchers.get('device_args'), matchers.get('app_args'),
+                activity_time)
 
-        return device
+            device.streams.append(stream)
+            self.environment.map[Transport.TCP][stream.number] = (device,
+                                                                  stream)
 
 
 class Environment(object):
@@ -173,6 +171,7 @@ class Environment(object):
     def pretty_print(self):
         for d in self.devices:
             print('Device: {}'.format(d.characteristics))
+            # print('Activity: {}'.format(d.activity))
             # for s in d.streams:
             #     print('\tStream {}: {}'.format(s.get_type(), s))
             print('\tServices:')

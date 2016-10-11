@@ -110,7 +110,7 @@ class UserAgentAnalyzer(object):
                         device_args[k[4:]] = best_match[k]
 
         UserAgentAnalyzer.run_ua_parser(user_agent, device_args, app_args)
-        return (device_args, app_args)
+        return {'device_args': device_args, 'app_args': app_args}
 
     def run_ua_parser(user_agent, device_args, app_args):
         parsed_string = user_agent_parser.Parse(user_agent)
