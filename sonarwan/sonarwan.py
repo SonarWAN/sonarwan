@@ -6,15 +6,15 @@ from environment import Environment
 
 import utils
 
-import tools
+from tools import main_tools
 
 
 class SonarWan(object):
     def __init__(self):
 
         self.environment = Environment(
-            ua_analyzer=tools.UserAgentAnalyzer(),
-            inference_engine=tools.InferenceEngine())
+            ua_analyzer=main_tools.UserAgentAnalyzer(),
+            inference_engine=main_tools.InferenceEngine())
         self.i = 0
 
     def analyze(self, path):

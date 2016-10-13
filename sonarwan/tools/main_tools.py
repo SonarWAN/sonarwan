@@ -6,6 +6,7 @@ from os.path import isfile, join
 
 from ua_parser import user_agent_parser
 
+from tools.mobile_detector import MobileDetector
 
 class InferenceEngine(object):
     def __init__(self):
@@ -78,6 +79,7 @@ class InferenceEngine(object):
 class UserAgentAnalyzer(object):
     def __init__(self):
         self.user_agents = self.get_config()
+        self.mobile_detector = MobileDetector()
 
     def get_config(self):
         user_agent_patterns = []
@@ -110,6 +112,7 @@ class UserAgentAnalyzer(object):
                         device_args[k[4:]] = best_match[k]
 
         UserAgentAnalyzer.run_ua_parser(user_agent, device_args, app_args)
+        self.run_mobile_detector(user_agent, device_args, app_args)
         return {'device_args': device_args, 'app_args': app_args}
 
     def run_ua_parser(user_agent, device_args, app_args):
@@ -120,6 +123,16 @@ class UserAgentAnalyzer(object):
         if parsed_string['os']['family'] and parsed_string['os'][
                 'family'] != 'Other' and 'os_family' not in device_args:
             device_args['os_family'] = parsed_string['os']['family']
+
+    def run_mobile_detector(self, user_agent, device_args, app_args):
+        response = self.mobile_detector.parse(user_agent)
+        if response.get('model') and 'model' not in device_args:
+            device_args['model'] = response['model']
+        if response.get('os_family') and 'os_family' not in device_args:
+            device_args['os_family'] = response['os_family']
+        if response.get('app_name') and 'name' not in app_args:
+            app_args['name'] = response['app_name']
+
 
 
 if __name__ == '__main__':
