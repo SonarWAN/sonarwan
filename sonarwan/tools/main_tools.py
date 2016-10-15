@@ -77,17 +77,27 @@ class InferenceEngine(object):
 
 
 class UserAgentAnalyzer(object):
-    def __init__(self):
-        self.user_agents = self.get_config()
+    def __init__(self, user_patterns_file):
+        self.user_agents = self.get_config(user_patterns_file)
         self.mobile_detector = MobileDetector()
 
-    def get_config(self):
+    def get_config(self, user_patterns_file):
         user_agent_patterns = []
 
         with open(paths.USER_AGENT_PATTERNS_FILE) as f:
             for each in f.read().splitlines():
                 if each and each[0] != '#':
                     user_agent_patterns.append(each)
+
+        if user_patterns_file:
+            try:
+                with open(user_patterns_file) as f:
+                    for each in f.read().splitlines():
+                        if each and each[0] != '#':
+                            user_agent_patterns.append(each)
+            except:
+                print('Not valid pattern file')
+                raise
 
         return user_agent_patterns
 
