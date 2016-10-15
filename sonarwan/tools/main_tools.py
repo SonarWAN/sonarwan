@@ -117,12 +117,45 @@ class UserAgentAnalyzer(object):
 
     def run_ua_parser(user_agent, device_args, app_args):
         parsed_string = user_agent_parser.Parse(user_agent)
+
         if parsed_string['device']['brand'] and parsed_string['device'][
                 'brand'] != 'Other' and 'brand' not in device_args:
             device_args['brand'] = parsed_string['device']['brand']
+
         if parsed_string['os']['family'] and parsed_string['os'][
                 'family'] != 'Other' and 'os_family' not in device_args:
             device_args['os_family'] = parsed_string['os']['family']
+
+        if 'os_version' not in device_args:
+            version = UserAgentAnalyzer.get_version_from_ua_parser(parsed_string['os'])
+            if version:
+                device_args['os_version'] = version
+
+    def get_version_from_ua_parser(ua_parser_os):
+        ret = ''
+
+        major = ua_parser_os.get('major')
+        if major:
+            ret+=major
+        else:
+            return ret
+        minor = ua_parser_os.get('minor')
+        if minor:
+            ret+='.'+minor
+        else:
+            return ret
+        patch = ua_parser_os.get('patch')
+        if patch:
+            ret+='.'+patch
+        else:
+            return ret
+        patch_minor = ua_parser_os.get('patch_minor')
+        if patch:
+            ret+='.'+patch_minor
+        else:
+            return ret
+
+        return ret
 
     def run_mobile_detector(self, user_agent, device_args, app_args):
         response = self.mobile_detector.parse(user_agent)
