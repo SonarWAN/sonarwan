@@ -36,7 +36,7 @@ class SonarWan(object):
 
     def print_info(self):
         if self.json_output:
-            pass
+            print(self.environment.toJSON())
         else:
             self.environment.pretty_print()
             print('Execution time: {}'.format((time.time() - self.start_time)))

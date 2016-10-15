@@ -108,3 +108,11 @@ class Device(object):
             self.characteristics)
         if inferences:
             self.characteristics.update(inferences)
+
+class DeviceLess():
+    def __init__(self, streams, services, characteristics, activity):
+        self.streams = streams
+        self.services = services
+        self.characteristics = characteristics
+        self.activity = activity
+

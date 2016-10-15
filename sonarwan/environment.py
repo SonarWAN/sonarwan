@@ -1,8 +1,10 @@
 from enum import Enum
 
-from device import Device
+from device import Device, DeviceLess
 
 import streams
+
+import json
 import random
 
 
@@ -177,3 +179,12 @@ class Environment(object):
             print('\tServices:')
             for service in d.services:
                 print('\t\t{}'.format(service.characteristics))
+
+    def toJSON(self):
+        aux_devices = []
+        for each in self.devices:
+            aux_devices.append(DeviceLess(each.streams, each.services, each.characteristics, each.activity))
+
+        return json.dumps(aux_devices, default=lambda o: o.__dict__ if hasattr(o, '__dict__') else str(o), sort_keys=True, indent=4)
+
+
