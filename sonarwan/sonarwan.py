@@ -23,10 +23,12 @@ class SonarWan(object):
         self.json_output = json_output
 
         self.start_time = time.time()
+        self.file_count = 0
 
     def analyze(self, path):
         cap = pyshark.FileCapture(path)
         self.environment.prepare()
+        self.file_count +=1
 
         for pkg in cap:
             self.i += 1
@@ -38,8 +40,7 @@ class SonarWan(object):
         if self.json_output:
             print(self.environment.toJSON())
         else:
-            self.environment.pretty_print()
-            print('Execution time: {}'.format((time.time() - self.start_time)))
+            utils.pretty_print(self)
 
 
 def make_argparse():

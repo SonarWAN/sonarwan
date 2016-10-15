@@ -170,16 +170,6 @@ class Environment(object):
     #             # TODO handle different tls pkgs
     #             pass
 
-    def pretty_print(self):
-        for d in self.devices:
-            print('Device: {}'.format(d.characteristics))
-            # print('Activity: {}'.format(d.activity))
-            # for s in d.streams:
-            #     print('\tStream {}: {}'.format(s.get_type(), s))
-            print('\tServices:')
-            for service in d.services:
-                print('\t\t{}'.format(service.characteristics))
-
     def toJSON(self):
         aux_devices = []
         for each in self.devices:
