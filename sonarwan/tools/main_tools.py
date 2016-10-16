@@ -76,10 +76,76 @@ class InferenceEngine(object):
         return True
 
 
+class ComplementaryUAAnalyzers(object):
+    def __init__(self):
+        self.mobile_detector = MobileDetector()
+
+    def get_additional_data(self, user_agent, device_args, app_args):
+        self.run_ua_parser(user_agent, device_args, app_args)
+        self.run_mobile_detector(user_agent, device_args, app_args)
+
+    def run_ua_parser(self, user_agent, device_args, app_args):
+        parsed_string = user_agent_parser.Parse(user_agent)
+
+        brand = parsed_string.get('device').get('brand')
+
+        if brand and ComplementaryUAAnalyzers.has_useful_data(brand) and 'brand' not in device_args:
+            device_args['brand'] = brand
+
+        os_family = parsed_string.get('os').get('family')
+
+        if os_family and ComplementaryUAAnalyzers.has_useful_data(os_family) and 'os_family' not in device_args:
+            device_args['os_family'] = os_family
+
+        if 'os_version' not in device_args:
+            version = ComplementaryUAAnalyzers.get_version_from_ua_parser(parsed_string['os'])
+
+            if version:
+                device_args['os_version'] = version
+
+    def has_useful_data(data):
+        return data!='Other' and data!='Generic'
+
+    def get_version_from_ua_parser(ua_parser_os):
+        ret = ''
+
+        major = ua_parser_os.get('major')
+        if major:
+            ret+=major
+        else:
+            return ret
+        minor = ua_parser_os.get('minor')
+        if minor:
+            ret+='.'+minor
+        else:
+            return ret
+        patch = ua_parser_os.get('patch')
+        if patch:
+            ret+='.'+patch
+        else:
+            return ret
+        patch_minor = ua_parser_os.get('patch_minor')
+        if patch:
+            ret+='.'+patch_minor
+        else:
+            return ret
+
+        return ret
+
+    def run_mobile_detector(self, user_agent, device_args, app_args):
+        response = self.mobile_detector.parse(user_agent)
+        if response.get('model') and 'model' not in device_args:
+            device_args['model'] = response['model']
+        if response.get('os_family') and 'os_family' not in device_args:
+            device_args['os_family'] = response['os_family']
+        if response.get('app_name') and 'name' not in app_args:
+            app_args['name'] = response['app_name']
+
+
 class UserAgentAnalyzer(object):
     def __init__(self, user_patterns_file):
         self.user_agents = self.get_config(user_patterns_file)
-        self.mobile_detector = MobileDetector()
+        self.complement = ComplementaryUAAnalyzers()
 
     def get_config(self, user_patterns_file):
         user_agent_patterns = []
@@ -121,61 +187,9 @@ class UserAgentAnalyzer(object):
                     elif k.startswith('DEV_'):
                         device_args[k[4:]] = best_match[k]
 
-        UserAgentAnalyzer.run_ua_parser(user_agent, device_args, app_args)
-        self.run_mobile_detector(user_agent, device_args, app_args)
+        self.complement.get_additional_data(user_agent, device_args, app_args)
+
         return {'device_args': device_args, 'app_args': app_args}
-
-    def run_ua_parser(user_agent, device_args, app_args):
-        parsed_string = user_agent_parser.Parse(user_agent)
-
-        if parsed_string['device']['brand'] and parsed_string['device'][
-                'brand'] != 'Other' and 'brand' not in device_args:
-            device_args['brand'] = parsed_string['device']['brand']
-
-        if parsed_string['os']['family'] and parsed_string['os'][
-                'family'] != 'Other' and 'os_family' not in device_args:
-            device_args['os_family'] = parsed_string['os']['family']
-
-        if 'os_version' not in device_args:
-            version = UserAgentAnalyzer.get_version_from_ua_parser(parsed_string['os'])
-            if version:
-                device_args['os_version'] = version
-
-    def get_version_from_ua_parser(ua_parser_os):
-        ret = ''
-
-        major = ua_parser_os.get('major')
-        if major:
-            ret+=major
-        else:
-            return ret
-        minor = ua_parser_os.get('minor')
-        if minor:
-            ret+='.'+minor
-        else:
-            return ret
-        patch = ua_parser_os.get('patch')
-        if patch:
-            ret+='.'+patch
-        else:
-            return ret
-        patch_minor = ua_parser_os.get('patch_minor')
-        if patch:
-            ret+='.'+patch_minor
-        else:
-            return ret
-
-        return ret
-
-    def run_mobile_detector(self, user_agent, device_args, app_args):
-        response = self.mobile_detector.parse(user_agent)
-        if response.get('model') and 'model' not in device_args:
-            device_args['model'] = response['model']
-        if response.get('os_family') and 'os_family' not in device_args:
-            device_args['os_family'] = response['os_family']
-        if response.get('app_name') and 'name' not in app_args:
-            app_args['name'] = response['app_name']
-
 
 
 if __name__ == '__main__':
