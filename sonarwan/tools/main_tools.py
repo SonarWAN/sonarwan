@@ -10,20 +10,28 @@ from tools.mobile_detector import MobileDetector
 
 
 class InferenceEngine(object):
-    def __init__(self):
-        self.load_inference_files()
+    def __init__(self, user_inference_directory):
+        self.load_inference_files(user_inference_directory)
 
-    def load_inference_files(self):
+    def load_inference_files(self, user_inference_directory):
         self.inference_list = []
+        self.load_files(paths.INFERENCE_DIR)
 
-        path = paths.INFERENCE_DIR
-        onlycsv = [f for f in listdir(path) if isfile(join(path, f))]
-        onlycsv = filter(lambda x: x[-4:] == '.csv', onlycsv)
-        onlycsv = map(lambda x: path + x, onlycsv)
-        for each in onlycsv:
-            with open(each) as f:
-                csvreader = csv.DictReader(f, delimiter=";")
-                self.inference_list.extend(list(csvreader))
+        if user_inference_directory:
+            self.load_files(user_inference_directory)
+
+    def load_files(self, path):
+        try:
+            onlycsv = [f for f in listdir(path) if isfile(join(path, f))]
+            onlycsv = filter(lambda x: x[-4:] == '.csv', onlycsv)
+            onlycsv = map(lambda x: path + x, onlycsv)
+            for each in onlycsv:
+                with open(each) as f:
+                    csvreader = csv.DictReader(f, delimiter=";")
+                    self.inference_list.extend(list(csvreader))
+        except:
+            print('Invalid inference directory or file format')
+            raise
 
     def analyze_inference(self, characteristics):
         candidates = [
@@ -148,28 +156,25 @@ class ComplementaryUAAnalyzers(object):
 
 class UserAgentAnalyzer(object):
     def __init__(self, user_patterns_file):
-        self.user_agents = self.get_config(user_patterns_file)
+        self.load_pattern_files(user_patterns_file)
         self.complement = ComplementaryUAAnalyzers()
 
-    def get_config(self, user_patterns_file):
-        user_agent_patterns = []
-
-        with open(paths.USER_AGENT_PATTERNS_FILE) as f:
-            for each in f.read().splitlines():
-                if each and each[0] != '#':
-                    user_agent_patterns.append(each)
+    def load_pattern_files(self, user_patterns_file):
+        self.user_agents = []
+        self.load_file(paths.USER_AGENT_PATTERNS_FILE)
 
         if user_patterns_file:
-            try:
-                with open(user_patterns_file) as f:
-                    for each in f.read().splitlines():
-                        if each and each[0] != '#':
-                            user_agent_patterns.append(each)
-            except:
-                print('Not valid pattern file')
-                raise
+            self.load_file(user_patterns_file)
 
-        return user_agent_patterns
+    def load_file(self, path):
+        try:
+            with open(path) as f:
+                for each in f.read().splitlines():
+                    if each and each[0] != '#':
+                        self.user_agents.append(each)
+
+        except:
+            print('Invalid pattern file')
 
     def get_best_match(self, user_agent):
         max_size = -1
