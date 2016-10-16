@@ -11,6 +11,7 @@ Pygments==2.1.3
 pyshark==0.3.6.1
 requests==2.10.0
 six==1.10.0
+tabulate==0.7.5
 trollius==1.0.4
 ua-parser==0.7.1
 wcwidth==0.1.7
