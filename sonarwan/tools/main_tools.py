@@ -8,6 +8,7 @@ from ua_parser import user_agent_parser
 
 from tools.mobile_detector import MobileDetector
 
+
 class InferenceEngine(object):
     def __init__(self):
         self.load_inference_files()
@@ -89,44 +90,47 @@ class ComplementaryUAAnalyzers(object):
 
         brand = parsed_string.get('device').get('brand')
 
-        if brand and ComplementaryUAAnalyzers.has_useful_data(brand) and 'brand' not in device_args:
+        if brand and ComplementaryUAAnalyzers.has_useful_data(
+                brand) and 'brand' not in device_args:
             device_args['brand'] = brand
 
         os_family = parsed_string.get('os').get('family')
 
-        if os_family and ComplementaryUAAnalyzers.has_useful_data(os_family) and 'os_family' not in device_args:
+        if os_family and ComplementaryUAAnalyzers.has_useful_data(
+                os_family) and 'os_family' not in device_args:
             device_args['os_family'] = os_family
 
         if 'os_version' not in device_args:
-            version = ComplementaryUAAnalyzers.get_version_from_ua_parser(parsed_string['os'])
+            version = ComplementaryUAAnalyzers.get_version_from_ua_parser(
+                parsed_string['os'])
 
             if version:
                 device_args['os_version'] = version
 
     def has_useful_data(data):
-        return data!='Other' and data!='Generic'
+        return data != 'Other' and data != 'Generic'
 
     def get_version_from_ua_parser(ua_parser_os):
         ret = ''
 
         major = ua_parser_os.get('major')
         if major:
-            ret+=major
+            ret += major
         else:
             return ret
         minor = ua_parser_os.get('minor')
         if minor:
-            ret+='.'+minor
+            ret += '.' + minor
         else:
             return ret
         patch = ua_parser_os.get('patch')
         if patch:
-            ret+='.'+patch
+            ret += '.' + patch
         else:
             return ret
         patch_minor = ua_parser_os.get('patch_minor')
         if patch:
-            ret+='.'+patch_minor
+            ret += '.' + patch_minor
         else:
             return ret
 

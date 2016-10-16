@@ -22,8 +22,9 @@ class Service(object):
     def __init__(self):
         self.activity = []
         self.characteristics = {}
+        self.destinies = []
 
-    def update_service(self, app_args):
+    def update_service(self, app_args, destiny):
         for k in app_args:
             current_value = self.characteristics.get(k)
             new_value = app_args.get(k)
@@ -31,6 +32,9 @@ class Service(object):
             if (not current_value) or (new_value and
                                        len(new_value) > len(current_value)):
                 self.characteristics[k] = new_value
+
+        if destiny not in self.destinies:
+            self.destinies.append(destiny)
 
 
 class Device(object):
@@ -59,12 +63,12 @@ class Device(object):
 
         return score
 
-    def update(self, device_args, app_args, activity_time):
+    def update(self, device_args, app_args, activity_time, destiny):
         self.update_device(device_args)
         self.activity.append(activity_time)
-        self.update_services(app_args, activity_time)
+        self.update_services(app_args, activity_time, destiny)
 
-    def update_services(self, app_args, activity_time):
+    def update_services(self, app_args, activity_time, destiny):
         services = []
         max_score = float('-inf')
 
@@ -92,7 +96,7 @@ class Device(object):
             self.services.append(service)
 
         if service:
-            service.update_service(app_args)
+            service.update_service(app_args, destiny)
             service.activity.append(activity_time)
 
     def update_device(self, device_args):
@@ -109,10 +113,10 @@ class Device(object):
         if inferences:
             self.characteristics.update(inferences)
 
+
 class DeviceLess():
     def __init__(self, streams, services, characteristics, activity):
         self.streams = streams
         self.services = services
         self.characteristics = characteristics
         self.activity = activity
-

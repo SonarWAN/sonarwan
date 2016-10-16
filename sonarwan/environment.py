@@ -70,7 +70,24 @@ class HTTPHandler(Handler):
             user_agent = pkg.http.user_agent
             self.analyze_user_agent(user_agent, stream, pkg.sniff_time)
 
-    def create_or_update_device(self, device_args, app_args, activity_time):
+    def analyze_user_agent(self, user_agent, stream, activity_time):
+
+        matchers = self.environment.ua_analyzer.get_best_match(user_agent)
+
+        device_args = matchers.get('device_args')
+        app_args = matchers.get('app_args')
+
+        destiny = {'ip': stream.ip_dst, 'port': stream.port_dst}
+
+        if device_args or app_args:
+            device = self.create_or_update_device(device_args, app_args,
+                                                  activity_time, destiny)
+            device.streams.append(stream)
+            self.environment.map[Transport.TCP][stream.number] = (device,
+                                                                  stream)
+
+    def create_or_update_device(self, device_args, app_args, activity_time,
+                                destiny):
         devices = []
         max_score = 0
         for d in self.environment.devices:
@@ -85,20 +102,8 @@ class HTTPHandler(Handler):
         else:
             device = self.environment.create_device()
 
-        device.update(device_args, app_args, activity_time)
+        device.update(device_args, app_args, activity_time, destiny)
         return device
-
-    def analyze_user_agent(self, user_agent, stream, activity_time):
-
-        matchers = self.environment.ua_analyzer.get_best_match(user_agent)
-        if matchers.get('device_args') or matchers.get('app_args'):
-            device = self.create_or_update_device(
-                matchers.get('device_args'), matchers.get('app_args'),
-                activity_time)
-
-            device.streams.append(stream)
-            self.environment.map[Transport.TCP][stream.number] = (device,
-                                                                  stream)
 
 
 class Environment(object):
@@ -173,8 +178,12 @@ class Environment(object):
     def toJSON(self):
         aux_devices = []
         for each in self.devices:
-            aux_devices.append(DeviceLess(each.streams, each.services, each.characteristics, each.activity))
+            aux_devices.append(
+                DeviceLess(each.streams, each.services, each.characteristics,
+                           each.activity))
 
-        return json.dumps(aux_devices, default=lambda o: o.__dict__ if hasattr(o, '__dict__') else str(o), sort_keys=True, indent=4)
-
-
+        return json.dumps(
+            aux_devices,
+            default=lambda o: o.__dict__ if hasattr(o, '__dict__') else str(o),
+            sort_keys=True,
+            indent=4)
