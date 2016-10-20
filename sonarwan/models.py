@@ -37,6 +37,10 @@ class Service(object):
             self.destinies.append(destiny)
 
 
+class AuthorlessService(object):
+    pass
+
+
 class Device(object):
     def __init__(self, inference_engine):
         self.streams = []  # List of Streams

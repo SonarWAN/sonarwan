@@ -1,6 +1,8 @@
 import paths
 import re
 import csv
+import ipaddress
+
 from os import listdir
 from os.path import isfile, join
 
@@ -137,7 +139,7 @@ class ComplementaryUAAnalyzers(object):
         else:
             return ret
         patch_minor = ua_parser_os.get('patch_minor')
-        if patch:
+        if patch_minor:
             ret += '.' + patch_minor
         else:
             return ret
@@ -199,6 +201,39 @@ class UserAgentAnalyzer(object):
         self.complement.get_additional_data(user_agent, device_args, app_args)
 
         return {'device_args': device_args, 'app_args': app_args}
+
+
+class IPAnalyzer(object):
+    def __init__(self):
+        self.service_map = {}
+        self.load_ip_files()
+
+    def load_ip_files(self):
+        self.load_files(paths.IPS_DIR)
+
+    def load_files(self, path):
+        try:
+            files = [f for f in listdir(path) if isfile(join(path, f))]
+            files = filter(lambda x: x[-4:] == '.ips', files)
+
+            for each in files:
+                self.service_map[each] = []
+                full_path = path+each
+                with open(full_path) as f:
+                    content = f.read().splitlines()
+                for line in content:
+                    self.service_map[each].append(ipaddress.ip_network(line))
+
+        except:
+            print('Invalid inference directory or file format')
+            raise
+
+    def find_service(self, ipaddr):
+        for k,v in self.service_map.items():
+            for each in v:
+                if ipaddress.ip_address(ipaddr) in each:
+                    return k
+        return None
 
 
 if __name__ == '__main__':

@@ -1,6 +1,6 @@
 from enum import Enum
 
-from device import Device, DeviceLess
+from models import Device, DeviceLess
 
 import streams
 
@@ -46,22 +46,25 @@ class Handler(object):
     def __init__(self, environment):
         self.environment = environment
 
-    def process(self, pkg):
-        try:
-            device, stream = self.environment.locate(pkg)
-        except LookupError:
-            if self.needs_processing(pkg):
-                self.process_new_stream(pkg)
-
+class TCPHandler(Handler):
+    pass
 
 class HTTPHandler(Handler):
     def process(self, pkg):
         if not hasattr(pkg, 'tcp'):
             return
-        super().process(pkg)
 
-    def needs_processing(self, pkg):
-        return is_request(pkg)
+        try:
+            device, stream = self.environment.locate_device(pkg)
+            self.process_existing_stream(pkg, device, stream)
+        except LookupError:
+            if is_request(pkg):
+                self.process_new_stream(pkg)
+
+    def process_existing_stream(self, pkg, device, stream):
+        if hasattr(pkg.http, 'user_agent'):
+            user_agent = pkg.http.user_agent
+            self.analyze_user_agent(user_agent, stream, pkg.sniff_time, device)
 
     def process_new_stream(self, pkg):
         stream = streams.HTTPStream(pkg.tcp.stream, **create_stream_dict(pkg))
@@ -70,7 +73,7 @@ class HTTPHandler(Handler):
             user_agent = pkg.http.user_agent
             self.analyze_user_agent(user_agent, stream, pkg.sniff_time)
 
-    def analyze_user_agent(self, user_agent, stream, activity_time):
+    def analyze_user_agent(self, user_agent, stream, activity_time, device_param=None):
 
         matchers = self.environment.ua_analyzer.get_best_match(user_agent)
 
@@ -82,9 +85,14 @@ class HTTPHandler(Handler):
         if device_args or app_args:
             device = self.create_or_update_device(device_args, app_args,
                                                   activity_time, destiny)
-            device.streams.append(stream)
-            self.environment.map[Transport.TCP][stream.number] = (device,
-                                                                  stream)
+            if not device_param:
+                device.streams.append(stream)
+                self.environment.device_stream_map[Transport.TCP][stream.number] = (device,
+                                                                      stream)
+            else:
+                device_param.update(device_args, app_args, activity_time, destiny)
+
+
 
     def create_or_update_device(self, device_args, app_args, activity_time,
                                 destiny):
@@ -107,19 +115,25 @@ class HTTPHandler(Handler):
 
 
 class Environment(object):
-    def __init__(self, ua_analyzer, inference_engine):
+    def __init__(self, ua_analyzer, inference_engine, ip_analyzer):
         self.devices = []
+        self.authorless_services = []
+
         self.http_handler = HTTPHandler(self)
+        self.tcp_handler = TCPHandler(self)
+
         self.handlers = {
             'http': self.http_handler,
+            # 'tcp':self.tcp_handler,
             # 'dns': self.__dns_handler,
             # 'ssl': self.__ssl_handler,
         }
         self.ua_analyzer = ua_analyzer
         self.inference_engine = inference_engine
+        self.ip_analyzer = ip_analyzer
 
     def prepare(self):
-        self.map = {
+        self.device_stream_map = {
             Transport.TCP: {},
             Transport.UDP: {},
         }
@@ -130,14 +144,14 @@ class Environment(object):
         if handler:
             handler.process(pkg)
 
-    def locate(self, pkg):
+    def locate_device(self, pkg):
         try:
             number = pkg.tcp.stream
             transport_prot = Transport.TCP
         except:
             number = pkg.udp.stream
             transport_prot = Transport.UDP
-        t = self.map[transport_prot].get(number)
+        t = self.device_stream_map[transport_prot].get(number)
 
         if not t:
             raise LookupError
