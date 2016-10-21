@@ -254,14 +254,21 @@ class Environment(object):
     #             pass
 
     def toJSON(self):
-        aux_devices = []
+        devices_less = []
         for each in self.devices:
-            aux_devices.append(
+            devices_less.append(
                 DeviceLess(each.streams, each.services, each.characteristics,
                            each.activity))
 
+        env_less = EnvironmentLess(devices_less, self.authorless_services)
+
         return json.dumps(
-            aux_devices,
+            env_less,
             default=lambda o: o.__dict__ if hasattr(o, '__dict__') else str(o),
             sort_keys=True,
             indent=4)
+
+class EnvironmentLess(object):
+    def __init__(self, devices, authorless_services):
+        self.devices = devices
+        self.authorless_services = authorless_services
