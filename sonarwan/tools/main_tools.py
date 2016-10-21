@@ -223,7 +223,8 @@ class IPAnalyzer(object):
                 with open(full_path) as f:
                     content = f.read().splitlines()
                 for line in content:
-                    self.service_map[name].append(ipaddress.ip_network(line))
+                    if line and line[0]!='#':
+                        self.service_map[name].append(ipaddress.ip_network(line))
 
         except:
             print('Invalid inference directory or file format')

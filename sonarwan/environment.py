@@ -50,29 +50,35 @@ class Handler(object):
 class TCPHandler(Handler):
     def process(self, pkg):
         # TODO -> only process pkg's originated from network
-        if self.environment.has_associated_device(pkg):
-            return
 
-        if not self.environment.has_associated_service_stream(pkg):
+        if self.needs_processing(pkg):
             service_name = self.environment.ip_analyzer.find_service(
                 pkg.ip.dst)
+            activity = pkg.sniff_time
+            destiny = pkg.ip.dst
             if service_name:
-                if self.environment.has_authorless_service(service_name):
-                    # TODO -> add activity
-                    pass
-                else:
-                    stream = streams.TCPStream(pkg.tcp.stream, **
-                                               create_stream_dict(pkg))
+                service = self.environment.get_existing_authorless_service(service_name)
+                if not service:
                     service = AuthorlessService()
                     service.characteristics['name'] = service_name
                     self.environment.authorless_services.append(service)
-                    self.environment.device_stream_map[Transport.TCP][
-                        stream.number] = service
+
+                service.activity.append(activity)
+                service.add_destiny(destiny)
+
+                self.environment.device_stream_map[Transport.TCP][
+                    pkg.tcp.stream] = service
+
+
+    def needs_processing(self, pkg):
+        return not self.environment.previously_analized_stream(pkg)
 
 
 class HTTPHandler(Handler):
     def process(self, pkg):
-        # TODO -> remove services that correspond to this stream
+
+        self.remove_unnecessary_services(pkg)
+
         t = self.environment.locate_device(pkg)
         if t:
             device, stream = t[0], t[1]
@@ -80,6 +86,18 @@ class HTTPHandler(Handler):
         else:
             if is_request(pkg):
                 self.process_new_stream(pkg)
+
+    def remove_unnecessary_services(self, pkg):
+        if self.environment.has_service_from_stream(pkg):
+            service = self.locate(pkg, self.device_stream_map)
+            self.environment.authorless_services.remove(service)
+
+            d_copy = dict(self.environment.service_stream_map)
+            for k, v in self.environment.service_stream_map.items():
+                if v == service:
+                    del d_copy[key]
+            self.environment.service_stream_map = d_copy
+
 
     def process_existing_stream(self, pkg, device, stream):
         if hasattr(pkg.http, 'user_agent'):
@@ -167,16 +185,25 @@ class Environment(object):
         elif app_layer.layer_name == 'ssl' or app_layer.layer_name == 'tcp':
             self.tcp_handler.process(pkg)
 
+    def previously_analized_stream(self, pkg):
+        return self.has_device_from_stream(pkg) or self.has_service_from_stream(pkg)
+
     def has_authorless_service(self, name):
         for each in self.authorless_services:
             if each.characteristics['name'] == name:
                 return True
         return False
 
-    def has_associated_device(self, pkg):
+    def get_existing_authorless_service(self, name):
+        for each in self.authorless_services:
+            if each.characteristics['name'] == name:
+                return each
+        return None
+
+    def has_device_from_stream(self, pkg):
         return self.locate_device(pkg) is not None
 
-    def has_associated_service_stream(self, pkg):
+    def has_service_from_stream(self, pkg):
         return self.locate_service(pkg) is not None
 
     def locate_device(self, pkg):

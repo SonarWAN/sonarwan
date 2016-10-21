@@ -33,6 +33,9 @@ class Service(object):
                                        len(new_value) > len(current_value)):
                 self.characteristics[k] = new_value
 
+        self.add_destiny(destiny)
+
+    def add_destiny(self, destiny):
         if destiny not in self.destinies:
             self.destinies.append(destiny)
 
