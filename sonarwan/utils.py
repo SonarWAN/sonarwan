@@ -17,6 +17,7 @@ def pretty_print(sonarwan):
     print("{} packets were analyzed.".format(sonarwan.i))
     print("Execution time: {}".format((time.time() - sonarwan.start_time)))
     print_title("Details")
+    print_title("Devices")
     for i, d in enumerate(sonarwan.environment.devices):
         print_subtitle("Device {}".format(i + 1))
         aux = []
@@ -36,6 +37,15 @@ def pretty_print(sonarwan):
                 aux.append([k, v.replace("%20", " ")])
             time_list = common_times(s.activity)
             aux.append(['Activity', " | ".join(time_list)])
+            print(tabulate(aux))
+        print()
+    print_title("Authorless Services")
+    for i, s in enumerate(sonarwan.environment.authorless_services):
+        print_subtitle("Service {}".format(i + 1))
+        aux = []
+        print('\nCharacteristics:')
+        for k, v in s.characteristics.items():
+            aux.append([k, v.replace("%20", " ")])
             print(tabulate(aux))
         print()
 

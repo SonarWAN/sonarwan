@@ -1,6 +1,6 @@
 from enum import Enum
 
-from models import Device, DeviceLess
+from models import Device, DeviceLess, AuthorlessService
 
 import streams
 
@@ -46,18 +46,38 @@ class Handler(object):
     def __init__(self, environment):
         self.environment = environment
 
+
 class TCPHandler(Handler):
-    pass
+    def process(self, pkg):
+        # TODO -> only process pkg's originated from network
+        if self.environment.has_associated_device(pkg):
+            return
+
+        if not self.environment.has_associated_service_stream(pkg):
+            service_name = self.environment.ip_analyzer.find_service(
+                pkg.ip.dst)
+            if service_name:
+                if self.environment.has_authorless_service(service_name):
+                    # TODO -> add activity
+                    pass
+                else:
+                    stream = streams.TCPStream(pkg.tcp.stream, **
+                                               create_stream_dict(pkg))
+                    service = AuthorlessService()
+                    service.characteristics['name'] = service_name
+                    self.environment.authorless_services.append(service)
+                    self.environment.device_stream_map[Transport.TCP][
+                        stream.number] = service
+
 
 class HTTPHandler(Handler):
     def process(self, pkg):
-        if not hasattr(pkg, 'tcp'):
-            return
-
-        try:
-            device, stream = self.environment.locate_device(pkg)
+        # TODO -> remove services that correspond to this stream
+        t = self.environment.locate_device(pkg)
+        if t:
+            device, stream = t[0], t[1]
             self.process_existing_stream(pkg, device, stream)
-        except LookupError:
+        else:
             if is_request(pkg):
                 self.process_new_stream(pkg)
 
@@ -73,7 +93,11 @@ class HTTPHandler(Handler):
             user_agent = pkg.http.user_agent
             self.analyze_user_agent(user_agent, stream, pkg.sniff_time)
 
-    def analyze_user_agent(self, user_agent, stream, activity_time, device_param=None):
+    def analyze_user_agent(self,
+                           user_agent,
+                           stream,
+                           activity_time,
+                           device_param=None):
 
         matchers = self.environment.ua_analyzer.get_best_match(user_agent)
 
@@ -87,12 +111,11 @@ class HTTPHandler(Handler):
                                                   activity_time, destiny)
             if not device_param:
                 device.streams.append(stream)
-                self.environment.device_stream_map[Transport.TCP][stream.number] = (device,
-                                                                      stream)
+                self.environment.device_stream_map[Transport.TCP][
+                    stream.number] = (device, stream)
             else:
-                device_param.update(device_args, app_args, activity_time, destiny)
-
-
+                device_param.update(device_args, app_args, activity_time,
+                                    destiny)
 
     def create_or_update_device(self, device_args, app_args, activity_time,
                                 destiny):
@@ -122,12 +145,6 @@ class Environment(object):
         self.http_handler = HTTPHandler(self)
         self.tcp_handler = TCPHandler(self)
 
-        self.handlers = {
-            'http': self.http_handler,
-            # 'tcp':self.tcp_handler,
-            # 'dns': self.__dns_handler,
-            # 'ssl': self.__ssl_handler,
-        }
         self.ua_analyzer = ua_analyzer
         self.inference_engine = inference_engine
         self.ip_analyzer = ip_analyzer
@@ -137,25 +154,45 @@ class Environment(object):
             Transport.TCP: {},
             Transport.UDP: {},
         }
+        self.service_stream_map = {
+            Transport.TCP: {},
+            Transport.UDP: {},
+        }
 
     def update(self, pkg):
         app_layer = pkg.layers[-1]
-        handler = self.handlers.get(app_layer.layer_name)
-        if handler:
-            handler.process(pkg)
+        if app_layer.layer_name == 'http' and pkg.layers[
+                -2].layer_name == 'tcp':
+            self.http_handler.process(pkg)
+        elif app_layer.layer_name == 'ssl' or app_layer.layer_name == 'tcp':
+            self.tcp_handler.process(pkg)
+
+    def has_authorless_service(self, name):
+        for each in self.authorless_services:
+            if each.characteristics['name'] == name:
+                return True
+        return False
+
+    def has_associated_device(self, pkg):
+        return self.locate_device(pkg) is not None
+
+    def has_associated_service_stream(self, pkg):
+        return self.locate_service(pkg) is not None
 
     def locate_device(self, pkg):
+        return self.locate(pkg, self.device_stream_map)
+
+    def locate_service(self, pkg):
+        return self.locate(pkg, self.device_stream_map)
+
+    def locate(self, pkg, structure):
         try:
             number = pkg.tcp.stream
             transport_prot = Transport.TCP
         except:
             number = pkg.udp.stream
             transport_prot = Transport.UDP
-        t = self.device_stream_map[transport_prot].get(number)
-
-        if not t:
-            raise LookupError
-        return t
+        return structure[transport_prot].get(number)
 
     def create_device(self):
         device = Device(self.inference_engine)

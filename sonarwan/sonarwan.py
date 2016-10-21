@@ -43,12 +43,14 @@ class SonarWan(object):
 
         self.arguments = arguments
 
-        ua_analyzer=main_tools.UserAgentAnalyzer(self.arguments.user_patterns_file)
-        inference_engine=main_tools.InferenceEngine(self.arguments.user_inference_directory)
-        ip_analyzer=main_tools.IPAnalyzer()
+        ua_analyzer = main_tools.UserAgentAnalyzer(
+            self.arguments.user_patterns_file)
+        inference_engine = main_tools.InferenceEngine(
+            self.arguments.user_inference_directory)
+        ip_analyzer = main_tools.IPAnalyzer()
 
-
-        self.environment = Environment(ua_analyzer, inference_engine, ip_analyzer)
+        self.environment = Environment(ua_analyzer, inference_engine,
+                                       ip_analyzer)
         self.i = 0
 
         self.start_time = time.time()

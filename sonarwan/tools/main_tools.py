@@ -217,19 +217,20 @@ class IPAnalyzer(object):
             files = filter(lambda x: x[-4:] == '.ips', files)
 
             for each in files:
-                self.service_map[each] = []
-                full_path = path+each
+                name = each[:-4]
+                self.service_map[name] = []
+                full_path = path + each
                 with open(full_path) as f:
                     content = f.read().splitlines()
                 for line in content:
-                    self.service_map[each].append(ipaddress.ip_network(line))
+                    self.service_map[name].append(ipaddress.ip_network(line))
 
         except:
             print('Invalid inference directory or file format')
             raise
 
     def find_service(self, ipaddr):
-        for k,v in self.service_map.items():
+        for k, v in self.service_map.items():
             for each in v:
                 if ipaddress.ip_address(ipaddr) in each:
                     return k

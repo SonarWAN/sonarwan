@@ -37,7 +37,7 @@ class Service(object):
             self.destinies.append(destiny)
 
 
-class AuthorlessService(object):
+class AuthorlessService(Service):
     pass
 
 
