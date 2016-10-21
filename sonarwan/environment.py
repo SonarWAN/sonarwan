@@ -89,7 +89,7 @@ class HTTPHandler(Handler):
 
     def remove_unnecessary_services(self, pkg):
         if self.environment.has_service_from_stream(pkg):
-            service = self.locate(pkg, self.device_stream_map)
+            service = self.environment.locate_service(pkg)
             self.environment.authorless_services.remove(service)
 
             d_copy = dict(self.environment.service_stream_map)
@@ -210,7 +210,7 @@ class Environment(object):
         return self.locate(pkg, self.device_stream_map)
 
     def locate_service(self, pkg):
-        return self.locate(pkg, self.device_stream_map)
+        return self.locate(pkg, self.service_stream_map)
 
     def locate(self, pkg, structure):
         try:
