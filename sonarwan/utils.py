@@ -12,7 +12,12 @@ def show_progress(pkg_index):
 def pretty_print(sonarwan):
     print()
     print_title("Summary")
-    print("SonarWAN found {} devices and {} authorless services in {} capture files.".format(len(sonarwan.environment.devices), len(sonarwan.environment.authorless_services), sonarwan.file_count))
+    print(
+        "SonarWAN found {} devices and {} authorless services in {} capture files.".
+        format(
+            len(sonarwan.environment.devices), len(
+                sonarwan.environment.authorless_services),
+            sonarwan.file_count))
     print("{} packets were analyzed.".format(sonarwan.i))
     print("Execution time: {}".format((time.time() - sonarwan.start_time)))
     print_title("Details")

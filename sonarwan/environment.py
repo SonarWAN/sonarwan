@@ -57,7 +57,8 @@ class TCPHandler(Handler):
             activity = pkg.sniff_time
             destiny = pkg.ip.dst
             if service_name:
-                service = self.environment.get_existing_authorless_service(service_name)
+                service = self.environment.get_existing_authorless_service(
+                    service_name)
                 if not service:
                     service = AuthorlessService()
                     service.characteristics['name'] = service_name
@@ -68,7 +69,6 @@ class TCPHandler(Handler):
 
                 self.environment.device_stream_map[Transport.TCP][
                     pkg.tcp.stream] = service
-
 
     def needs_processing(self, pkg):
         return not self.environment.previously_analized_stream(pkg)
@@ -97,7 +97,6 @@ class HTTPHandler(Handler):
                 if v == service:
                     del d_copy[key]
             self.environment.service_stream_map = d_copy
-
 
     def process_existing_stream(self, pkg, device, stream):
         if hasattr(pkg.http, 'user_agent'):
@@ -186,7 +185,8 @@ class Environment(object):
             self.tcp_handler.process(pkg)
 
     def previously_analized_stream(self, pkg):
-        return self.has_device_from_stream(pkg) or self.has_service_from_stream(pkg)
+        return self.has_device_from_stream(
+            pkg) or self.has_service_from_stream(pkg)
 
     def has_authorless_service(self, name):
         for each in self.authorless_services:

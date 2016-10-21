@@ -207,6 +207,8 @@ class IPAnalyzer(object):
     def __init__(self):
         self.service_map = {}
         self.load_ip_files()
+        self.not_found_cache = set()
+        self.found_cache = {}
 
     def load_ip_files(self):
         self.load_files(paths.IPS_DIR)
@@ -223,19 +225,30 @@ class IPAnalyzer(object):
                 with open(full_path) as f:
                     content = f.read().splitlines()
                 for line in content:
-                    if line and line[0]!='#':
-                        self.service_map[name].append(ipaddress.ip_network(line))
+                    if line and line[0] != '#':
+                        self.service_map[name].append(
+                            ipaddress.ip_network(line))
 
         except:
             print('Invalid inference directory or file format')
             raise
 
     def find_service(self, ipaddr):
-        for k, v in self.service_map.items():
-            for each in v:
-                if ipaddress.ip_address(ipaddr) in each:
-                    return k
-        return None
+        if ipaddr in self.not_found_cache:
+            return None
+
+        name = self.found_cache.get(ipaddr)
+        if name:
+            return name
+        else:
+            for k, v in self.service_map.items():
+                for each in v:
+                    if ipaddress.ip_address(ipaddr) in each:
+                        self.found_cache[ipaddr] = k
+                        return k
+
+            self.not_found_cache.add(ipaddr)
+            return None
 
 
 if __name__ == '__main__':
