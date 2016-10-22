@@ -56,11 +56,17 @@ class TCPHandler(Handler):
             self.process_existing_stream(pkg)
 
     def process_existing_stream(self, pkg):
-        # previously analized
+
         if self.environment.has_service_from_stream(pkg):
             service = self.environment.locate_service(pkg)
             service.add_activity(pkg.sniff_time, pkg.length)
-        # analize has_device_from_stream
+
+        if self.environment.has_device_from_stream(pkg):
+            device, stream = self.environment.locate_device(pkg)
+            device.add_activity(pkg.sniff_time, pkg.length)
+            service = device.stream_to_service.get(stream.number)
+            if service:
+                service.add_activity(pkg.sniff_time, pkg.length)
 
         elif self.environment.has_temporal_stream(pkg):
             self.environment.temporal_stream_map[Transport.TCP][
