@@ -52,7 +52,7 @@ def pretty_print(sonarwan):
             aux.append([k, v.replace("%20", " ")])
             time_list = common_times(s.activity)
             aux.append(['Activity', " | ".join(time_list)])
-            aux.append(['Destinies', " | ".join(s.destinies)])
+            aux.append(['Destinations', " | ".join(s.destinations)])
             print(tabulate(aux))
         print()
 

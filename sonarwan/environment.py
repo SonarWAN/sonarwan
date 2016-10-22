@@ -55,7 +55,7 @@ class TCPHandler(Handler):
             service_name = self.environment.ip_analyzer.find_service(
                 pkg.ip.dst)
             activity = pkg.sniff_time
-            destiny = pkg.ip.dst
+            destination = pkg.ip.dst
             if service_name:
                 service = self.environment.get_existing_authorless_service(
                     service_name)
@@ -65,7 +65,7 @@ class TCPHandler(Handler):
                     self.environment.authorless_services.append(service)
 
                 service.activity.append(activity)
-                service.add_destiny(destiny)
+                service.add_destination(destination)
 
                 self.environment.device_stream_map[Transport.TCP][
                     pkg.tcp.stream] = service
@@ -121,21 +121,21 @@ class HTTPHandler(Handler):
         device_args = matchers.get('device_args')
         app_args = matchers.get('app_args')
 
-        destiny = {'ip': stream.ip_dst, 'port': stream.port_dst}
+        destination = {'ip': stream.ip_dst, 'port': stream.port_dst}
 
         if device_args or app_args:
             device = self.create_or_update_device(device_args, app_args,
-                                                  activity_time, destiny)
+                                                  activity_time, destination)
             if not device_param:
                 device.streams.append(stream)
                 self.environment.device_stream_map[Transport.TCP][
                     stream.number] = (device, stream)
             else:
                 device_param.update(device_args, app_args, activity_time,
-                                    destiny)
+                                    destination)
 
     def create_or_update_device(self, device_args, app_args, activity_time,
-                                destiny):
+                                destination):
         devices = []
         max_score = 0
         for d in self.environment.devices:
@@ -150,7 +150,7 @@ class HTTPHandler(Handler):
         else:
             device = self.environment.create_device()
 
-        device.update(device_args, app_args, activity_time, destiny)
+        device.update(device_args, app_args, activity_time, destination)
         return device
 
 
@@ -267,6 +267,7 @@ class Environment(object):
             default=lambda o: o.__dict__ if hasattr(o, '__dict__') else str(o),
             sort_keys=True,
             indent=4)
+
 
 class EnvironmentLess(object):
     def __init__(self, devices, authorless_services):

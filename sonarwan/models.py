@@ -22,9 +22,9 @@ class Service(object):
     def __init__(self):
         self.activity = []
         self.characteristics = {}
-        self.destinies = []
+        self.destinations = []
 
-    def update_service(self, app_args, destiny):
+    def update_service(self, app_args, destination):
         for k in app_args:
             current_value = self.characteristics.get(k)
             new_value = app_args.get(k)
@@ -33,11 +33,11 @@ class Service(object):
                                        len(new_value) > len(current_value)):
                 self.characteristics[k] = new_value
 
-        self.add_destiny(destiny)
+        self.add_destination(destination)
 
-    def add_destiny(self, destiny):
-        if destiny not in self.destinies:
-            self.destinies.append(destiny)
+    def add_destination(self, destination):
+        if destination not in self.destinations:
+            self.destinations.append(destination)
 
 
 class AuthorlessService(Service):
@@ -70,12 +70,12 @@ class Device(object):
 
         return score
 
-    def update(self, device_args, app_args, activity_time, destiny):
+    def update(self, device_args, app_args, activity_time, destination):
         self.update_device(device_args)
         self.activity.append(activity_time)
-        self.update_services(app_args, activity_time, destiny)
+        self.update_services(app_args, activity_time, destination)
 
-    def update_services(self, app_args, activity_time, destiny):
+    def update_services(self, app_args, activity_time, destination):
         services = []
         max_score = float('-inf')
 
@@ -103,7 +103,7 @@ class Device(object):
             self.services.append(service)
 
         if service:
-            service.update_service(app_args, destiny)
+            service.update_service(app_args, destination)
             service.activity.append(activity_time)
 
     def update_device(self, device_args):
