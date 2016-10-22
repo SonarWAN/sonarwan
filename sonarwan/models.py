@@ -98,7 +98,8 @@ class Device(object):
 
         #Service
         service = self.update_services(app_args, stream)
-        service.add_all_activity(tuple_list)
+        if service:
+            service.add_all_activity(tuple_list)
 
     def update_services(self, app_args, stream):
         services = []
