@@ -97,7 +97,7 @@ class TCPHandler(Handler):
 class HTTPHandler(Handler):
     def process(self, pkg):
 
-        # self.remove_unnecessary_services(pkg)
+        self.remove_unnecessary_services(pkg)
 
         t = self.environment.locate_device(pkg)
         if t:
@@ -124,6 +124,9 @@ class HTTPHandler(Handler):
             self.analyze_user_agent(user_agent, stream, pkg, device)
         else:
             device.add_activity(pkg.sniff_time, pkg.length)
+            service = device.stream_to_service.get(stream.number)
+            if service:
+                service.add_activity(pkg.sniff_time, pkg.length)
 
     def process_new_stream(self, pkg):
         stream = streams.HTTPStream(pkg.tcp.stream, **create_stream_dict(pkg))
@@ -204,11 +207,10 @@ class Environment(object):
         }
 
     def update(self, pkg):
-        app_layer = pkg.layers[-1]
-        if app_layer.layer_name == 'http' and pkg.layers[
-                -2].layer_name == 'tcp':
+        layers = [each.layer_name for each in pkg.layers]
+        if 'http' in layers and 'tcp' in layers:
             self.http_handler.process(pkg)
-        elif app_layer.layer_name == 'ssl' or app_layer.layer_name == 'tcp':
+        elif 'ssl' in layers or layers[-1] == 'tcp':
             self.tcp_handler.process(pkg)
 
     def previously_analized_stream(self, pkg):

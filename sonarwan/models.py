@@ -59,6 +59,7 @@ class Device(object):
         self.services = []  # List of characteristics
         self.characteristics = {}
         self.activity = {}
+        self.stream_to_service = {}
 
         self.inference_engine = inference_engine
 
@@ -128,6 +129,9 @@ class Device(object):
 
         if service:
             service.update_service(app_args, stream)
+
+            self.stream_to_service[stream.number] = service
+
             return service
 
     def update_device(self, device_args):
