@@ -29,18 +29,22 @@ def pretty_print(sonarwan):
         for k, v in d.characteristics.items():
             aux.append([k, v.replace("%20", " ")])
         aux.append(['Associated services', len(d.services)])
-        time_list = common_times(d.activity)
-        aux.append(['Activity', " | ".join(time_list)])
+        print(tabulate(aux))
+        print('\nActivity:')
+        aux = []
+        for k, v in d.activity.items():
+            aux.append([k, v])
         print(tabulate(aux))
         for j, s in enumerate(d.services):
             print()
             print("Service {}:".format(j + 1))
-            time_list = common_times(s.activity)
             aux = []
             for k, v in s.characteristics.items():
                 aux.append([k, v.replace("%20", " ")])
-            time_list = common_times(s.activity)
-            aux.append(['Activity', " | ".join(time_list)])
+            print(tabulate(aux))
+            aux = []
+            for k, v in s.activity.items():
+                aux.append([k, v])
             print(tabulate(aux))
         print()
     print_title("Authorless Services")
@@ -50,10 +54,12 @@ def pretty_print(sonarwan):
         print('\nCharacteristics:')
         for k, v in s.characteristics.items():
             aux.append([k, v.replace("%20", " ")])
-            time_list = common_times(s.activity)
-            aux.append(['Activity', " | ".join(time_list)])
-            aux.append(['Destinations', " | ".join(s.destinations)])
-            print(tabulate(aux))
+        print(tabulate(aux))
+        print('\nActivity:')
+        aux = []
+        for k, v in s.activity.items():
+            aux.append([k, v])
+        print(tabulate(aux))
         print()
 
 
@@ -68,10 +74,3 @@ def print_subtitle(string):
     aux = '=' * len(string)
     print(string)
     print("{}".format(aux))
-
-
-def common_times(datetimes):
-    ret = set()
-    for each in datetimes:
-        ret.add(each.strftime("%Y-%m-%d %H:%M:%S"))
-    return list(ret)

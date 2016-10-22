@@ -20,11 +20,11 @@ def similarity(base, k, v):
 
 class Service(object):
     def __init__(self):
-        self.activity = []
+        self.activity = {}
         self.characteristics = {}
-        self.destinations = []
+        self.streams = []
 
-    def update_service(self, app_args, destination):
+    def update_service(self, app_args, stream):
         for k in app_args:
             current_value = self.characteristics.get(k)
             new_value = app_args.get(k)
@@ -33,11 +33,20 @@ class Service(object):
                                        len(new_value) > len(current_value)):
                 self.characteristics[k] = new_value
 
-        self.add_destination(destination)
+        self.add_stream(stream)
 
-    def add_destination(self, destination):
-        if destination not in self.destinations:
-            self.destinations.append(destination)
+    def add_stream(self, stream):
+        if stream not in self.streams:
+            self.streams.append(stream)
+
+    def add_activity(self, time, bytes_count):
+        time_string = time.strftime('%D %H:%M:%S')
+        self.activity[time_string] = self.activity.get(time_string,
+                                                       0) + int(bytes_count)
+
+    def add_all_activity(self, tuple_list):
+        for each in tuple_list:
+            self.add_activity(each[0], each[1])
 
 
 class AuthorlessService(Service):
@@ -49,9 +58,18 @@ class Device(object):
         self.streams = []  # List of Streams
         self.services = []  # List of characteristics
         self.characteristics = {}
-        self.activity = []
+        self.activity = {}
 
         self.inference_engine = inference_engine
+
+    def add_activity(self, time, bytes_count):
+        time_string = time.strftime('%D %H:%M:%S')
+        self.activity[time_string] = self.activity.get(time_string,
+                                                       0) + int(bytes_count)
+
+    def add_all_activity(self, tuple_list):
+        for each in tuple_list:
+            self.add_activity(each[0], each[1])
 
     def match_score(self, device_args, app_args):
         score = 0
@@ -70,12 +88,18 @@ class Device(object):
 
         return score
 
-    def update(self, device_args, app_args, activity_time, destination):
-        self.update_device(device_args)
-        self.activity.append(activity_time)
-        self.update_services(app_args, activity_time, destination)
+    def update(self, device_args, app_args, tuple_list, stream):
+        # Tuple list contains (time, bytes)
 
-    def update_services(self, app_args, activity_time, destination):
+        # Device
+        self.update_device(device_args)
+        self.add_all_activity(tuple_list)
+
+        #Service
+        service = self.update_services(app_args, stream)
+        service.add_all_activity(tuple_list)
+
+    def update_services(self, app_args, stream):
         services = []
         max_score = float('-inf')
 
@@ -103,8 +127,8 @@ class Device(object):
             self.services.append(service)
 
         if service:
-            service.update_service(app_args, destination)
-            service.activity.append(activity_time)
+            service.update_service(app_args, stream)
+            return service
 
     def update_device(self, device_args):
         for k in device_args:
@@ -122,8 +146,13 @@ class Device(object):
 
 
 class DeviceLess():
-    def __init__(self, streams, services, characteristics, activity):
-        self.streams = streams
+    def __init__(self, services, characteristics, activity):
         self.services = services
+        self.characteristics = characteristics
+        self.activity = activity
+
+
+class ServiceLess():
+    def __init__(self, characteristics, activity):
         self.characteristics = characteristics
         self.activity = activity

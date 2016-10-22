@@ -5,7 +5,6 @@ class Stream(object):
         self.ip_dst = kwargs['ip_dst']
         self.port_src = kwargs['port_src']
         self.port_dst = kwargs['port_dst']
-        self.address = None
 
     def __repr__(self):
         return ' -> '.join(['({} - {})'.format(self.ip_src, self.port_src),

@@ -1,6 +1,6 @@
 from enum import Enum
 
-from models import Device, DeviceLess, AuthorlessService
+from models import Device, DeviceLess, AuthorlessService, ServiceLess
 
 import streams
 
@@ -49,26 +49,46 @@ class Handler(object):
 
 class TCPHandler(Handler):
     def process(self, pkg):
-        # TODO -> only process pkg's originated from network
 
         if self.needs_processing(pkg):
-            service_name = self.environment.ip_analyzer.find_service(
-                pkg.ip.dst)
-            activity = pkg.sniff_time
-            destination = pkg.ip.dst
-            if service_name:
-                service = self.environment.get_existing_authorless_service(
-                    service_name)
-                if not service:
-                    service = AuthorlessService()
-                    service.characteristics['name'] = service_name
-                    self.environment.authorless_services.append(service)
+            self.process_new_stream(pkg)
+        else:
+            self.process_existing_stream(pkg)
 
-                service.activity.append(activity)
-                service.add_destination(destination)
+    def process_existing_stream(self, pkg):
+        # previously analized
+        if self.environment.has_service_from_stream(pkg):
+            service = self.environment.locate_service(pkg)
+            service.add_activity(pkg.sniff_time, pkg.length)
+        # analize has_device_from_stream
 
-                self.environment.device_stream_map[Transport.TCP][
-                    pkg.tcp.stream] = service
+        elif self.environment.has_temporal_stream(pkg):
+            self.environment.temporal_stream_map[Transport.TCP][
+                pkg.tcp.stream].append((pkg.sniff_time, pkg.length))
+
+    def process_new_stream(self, pkg):
+        stream = streams.TCPStream(pkg.tcp.stream, **create_stream_dict(pkg))
+
+        service_name = self.environment.ip_analyzer.find_service(pkg.ip.dst)
+
+        if service_name:
+            service = self.environment.get_existing_authorless_service(
+                service_name)
+            if not service:
+                service = AuthorlessService()
+                service.characteristics['name'] = service_name
+                self.environment.authorless_services.append(service)
+
+            service.add_activity(pkg.sniff_time, pkg.length)
+
+            service.add_stream(stream)
+
+            self.environment.service_stream_map[Transport.TCP][
+                pkg.tcp.stream] = service
+
+        else:
+            self.environment.temporal_stream_map[Transport.TCP][
+                pkg.tcp.stream] = [(pkg.sniff_time, pkg.length)]
 
     def needs_processing(self, pkg):
         return not self.environment.previously_analized_stream(pkg)
@@ -77,7 +97,7 @@ class TCPHandler(Handler):
 class HTTPHandler(Handler):
     def process(self, pkg):
 
-        self.remove_unnecessary_services(pkg)
+        # self.remove_unnecessary_services(pkg)
 
         t = self.environment.locate_device(pkg)
         if t:
@@ -101,41 +121,38 @@ class HTTPHandler(Handler):
     def process_existing_stream(self, pkg, device, stream):
         if hasattr(pkg.http, 'user_agent'):
             user_agent = pkg.http.user_agent
-            self.analyze_user_agent(user_agent, stream, pkg.sniff_time, device)
+            self.analyze_user_agent(user_agent, stream, pkg, device)
+        else:
+            device.add_activity(pkg.sniff_time, pkg.length)
 
     def process_new_stream(self, pkg):
         stream = streams.HTTPStream(pkg.tcp.stream, **create_stream_dict(pkg))
 
         if hasattr(pkg.http, 'user_agent'):
             user_agent = pkg.http.user_agent
-            self.analyze_user_agent(user_agent, stream, pkg.sniff_time)
+            self.analyze_user_agent(user_agent, stream, pkg)
 
-    def analyze_user_agent(self,
-                           user_agent,
-                           stream,
-                           activity_time,
-                           device_param=None):
+    def analyze_user_agent(self, user_agent, stream, pkg, device_param=None):
 
         matchers = self.environment.ua_analyzer.get_best_match(user_agent)
 
         device_args = matchers.get('device_args')
         app_args = matchers.get('app_args')
 
-        destination = {'ip': stream.ip_dst, 'port': stream.port_dst}
-
         if device_args or app_args:
-            device = self.create_or_update_device(device_args, app_args,
-                                                  activity_time, destination)
+
             if not device_param:
+                device = self.create_or_update_device(device_args, app_args,
+                                                      pkg, stream)
                 device.streams.append(stream)
                 self.environment.device_stream_map[Transport.TCP][
                     stream.number] = (device, stream)
-            else:
-                device_param.update(device_args, app_args, activity_time,
-                                    destination)
 
-    def create_or_update_device(self, device_args, app_args, activity_time,
-                                destination):
+            else:
+                device_param.update(device_args, app_args,
+                                    [(pkg.sniff_time, pkg.length)], stream)
+
+    def create_or_update_device(self, device_args, app_args, pkg, stream):
         devices = []
         max_score = 0
         for d in self.environment.devices:
@@ -150,7 +167,13 @@ class HTTPHandler(Handler):
         else:
             device = self.environment.create_device()
 
-        device.update(device_args, app_args, activity_time, destination)
+        tuple_list = [(pkg.sniff_time, pkg.length)]
+        if self.environment.has_temporal_stream(pkg):
+            for each in self.environment.locate_temporal(pkg):
+                tuple_list.append((each[0], each[1]))
+
+        device.update(device_args, app_args, tuple_list, stream)
+
         return device
 
 
@@ -175,6 +198,10 @@ class Environment(object):
             Transport.TCP: {},
             Transport.UDP: {},
         }
+        self.temporal_stream_map = {
+            Transport.TCP: {},
+            Transport.UDP: {},
+        }
 
     def update(self, pkg):
         app_layer = pkg.layers[-1]
@@ -186,7 +213,11 @@ class Environment(object):
 
     def previously_analized_stream(self, pkg):
         return self.has_device_from_stream(
-            pkg) or self.has_service_from_stream(pkg)
+            pkg) or self.has_service_from_stream(
+                pkg) or self.has_temporal_stream(pkg)
+
+    def has_temporal_stream(self, pkg):
+        return self.locate(pkg, self.temporal_stream_map) is not None
 
     def has_authorless_service(self, name):
         for each in self.authorless_services:
@@ -208,6 +239,9 @@ class Environment(object):
 
     def locate_device(self, pkg):
         return self.locate(pkg, self.device_stream_map)
+
+    def locate_temporal(self, pkg):
+        return self.locate(pkg, self.temporal_stream_map)
 
     def locate_service(self, pkg):
         return self.locate(pkg, self.service_stream_map)
@@ -256,11 +290,18 @@ class Environment(object):
     def toJSON(self):
         devices_less = []
         for each in self.devices:
+            services_less = []
+            for s in each.services:
+                services_less.append(
+                    ServiceLess(s.characteristics, s.activity))
             devices_less.append(
-                DeviceLess(each.streams, each.services, each.characteristics,
-                           each.activity))
+                DeviceLess(services_less, each.characteristics, each.activity))
+        authorless_services_less = []
+        for each in self.authorless_services:
+            authorless_services_less.append(
+                ServiceLess(each.characteristics, each.activity))
 
-        env_less = EnvironmentLess(devices_less, self.authorless_services)
+        env_less = EnvironmentLess(devices_less, authorless_services_less)
 
         return json.dumps(
             env_less,
