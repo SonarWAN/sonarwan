@@ -1,9 +1,10 @@
 import pyshark
 import sys
 import time
+import json
 
 from environment import Environment
-from arguments import Arguments
+from models import ServiceLess, DeviceLess
 
 import utils
 
@@ -41,23 +42,46 @@ class SonarWan(object):
 
     def print_info(self):
         if self.arguments.json_output:
-            print(self.environment.toJSON())
+            sonarwan_full = SonarwanRep(self)
+            print(sonarwan_full.toJSON())
         else:
             utils.pretty_print(self)
 
 
-def main():
-    parser = Arguments.create_parser()
-    args = parser.parse_args()
-    arguments = Arguments(args.json, args.patterns, args.inference, args.ips)
-
-    sonarwan = SonarWan(arguments)
-
-    for each in args.files:
-        sonarwan.analyze(each)
-
-    sonarwan.print_info()
+class Summary(object):
+    def __init__(self, sonarwan):
+        self.devices = len(sonarwan.environment.devices)
+        self.authorless_services = len(
+            sonarwan.environment.authorless_services)
+        self.packets = sonarwan.i
+        self.execution_time = int(
+            (time.time() - sonarwan.start_time) * 100) / 100
+        self.files = sonarwan.file_count
 
 
-if __name__ == '__main__':
-    main()
+class SonarwanRep(object):
+    def __init__(self, sonarwan):
+        self.summary = Summary(sonarwan)
+
+        self.init_devices(sonarwan.environment.devices)
+        self.init_services(sonarwan.environment.authorless_services)
+
+    def init_devices(self, devices):
+        self.devices = []
+        for each in devices:
+            self.services = []
+            for s in each.services:
+                self.services.append(
+                    ServiceLess(s.characteristics, s.activity))
+            self.devices.append(
+                DeviceLess(self.services, each.characteristics, each.activity))
+
+    def init_services(self, services):
+        self.authorless_services = []
+        for each in services:
+            self.authorless_services.append(
+                ServiceLess(each.characteristics, each.activity))
+
+    def toJSON(self):
+        return json.dumps(
+            self, default=lambda o: o.__dict__, sort_keys=True, indent=4)

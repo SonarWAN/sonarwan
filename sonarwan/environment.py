@@ -4,7 +4,6 @@ from models import Device, DeviceLess, AuthorlessService, ServiceLess
 
 import streams
 
-import json
 import random
 
 
@@ -294,31 +293,3 @@ class Environment(object):
     #         else:
     #             # TODO handle different tls pkgs
     #             pass
-
-    def toJSON(self):
-        devices_less = []
-        for each in self.devices:
-            services_less = []
-            for s in each.services:
-                services_less.append(
-                    ServiceLess(s.characteristics, s.activity))
-            devices_less.append(
-                DeviceLess(services_less, each.characteristics, each.activity))
-        authorless_services_less = []
-        for each in self.authorless_services:
-            authorless_services_less.append(
-                ServiceLess(each.characteristics, each.activity))
-
-        env_less = EnvironmentLess(devices_less, authorless_services_less)
-
-        return json.dumps(
-            env_less,
-            default=lambda o: o.__dict__ if hasattr(o, '__dict__') else str(o),
-            sort_keys=True,
-            indent=4)
-
-
-class EnvironmentLess(object):
-    def __init__(self, devices, authorless_services):
-        self.devices = devices
-        self.authorless_services = authorless_services
