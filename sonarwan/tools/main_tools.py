@@ -204,14 +204,18 @@ class UserAgentAnalyzer(object):
 
 
 class IPAnalyzer(object):
-    def __init__(self):
+    def __init__(self, user_ips_directory):
         self.service_map = {}
-        self.load_ip_files()
+        self.load_ip_files(user_ips_directory)
+
         self.not_found_cache = set()
         self.found_cache = {}
 
-    def load_ip_files(self):
+    def load_ip_files(self, user_ips_directory):
         self.load_files(paths.IPS_DIR)
+
+        if user_ips_directory:
+            self.load_files(user_ips_directory)
 
     def load_files(self, path):
         try:
