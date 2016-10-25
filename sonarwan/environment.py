@@ -11,8 +11,22 @@ def is_query(pkg):
     return not hasattr(pkg.dns, 'a')
 
 
+def is_dns_response(pkg):
+    return hasattr(pkg.dns, 'a')
+
+
 def is_request(pkg):
     return hasattr(pkg.http, 'request')
+
+
+def get_dns_answers(pkg):
+    ret = []
+    for field_line in pkg.dns._get_all_field_lines():
+        if ':' in field_line:
+            field_name, field_line = field_line.split(':', 1)
+            if (field_name.strip() == 'Address'):
+                ret.append(field_line.strip())
+    return ret
 
 
 def is_client_hello(pkg):
@@ -46,6 +60,17 @@ class Handler(object):
         self.environment = environment
 
 
+class DNSHandler(Handler):
+    def process(self, pkg):
+        if self.needs_processing(pkg):
+            answers = get_dns_answers(pkg)
+            for each in answers:
+                self.environment.address_host[each] = pkg.dns.qry_name
+
+    def needs_processing(self, pkg):
+        return is_dns_response(pkg)
+
+
 class TCPHandler(Handler):
     def process(self, pkg):
 
@@ -71,26 +96,31 @@ class TCPHandler(Handler):
             self.environment.temporal_stream_map[Transport.TCP][
                 pkg.tcp.stream].append((pkg.sniff_time, pkg.length))
 
+    def process_service(self, service_name, pkg, stream):
+        service = self.environment.get_existing_authorless_service(
+            service_name)
+        if not service:
+            service = AuthorlessService()
+            service.characteristics['name'] = service_name
+            self.environment.authorless_services.append(service)
+
+        service.add_activity(pkg.sniff_time, pkg.length)
+
+        service.add_stream(stream)
+
+        self.environment.service_stream_map[Transport.TCP][
+            pkg.tcp.stream] = service
+
     def process_new_stream(self, pkg):
         stream = streams.TCPStream(pkg.tcp.stream, **create_stream_dict(pkg))
 
         service_name = self.environment.ip_analyzer.find_service(pkg.ip.dst)
+        host = self.environment.find_host(pkg.ip.dst)
 
         if service_name:
-            service = self.environment.get_existing_authorless_service(
-                service_name)
-            if not service:
-                service = AuthorlessService()
-                service.characteristics['name'] = service_name
-                self.environment.authorless_services.append(service)
-
-            service.add_activity(pkg.sniff_time, pkg.length)
-
-            service.add_stream(stream)
-
-            self.environment.service_stream_map[Transport.TCP][
-                pkg.tcp.stream] = service
-
+            self.process_service(service_name, pkg, stream)
+        elif host:
+            self.process_service(host, pkg, stream)
         else:
             self.environment.temporal_stream_map[Transport.TCP][
                 pkg.tcp.stream] = [(pkg.sniff_time, pkg.length)]
@@ -117,11 +147,12 @@ class HTTPHandler(Handler):
             service = self.environment.locate_service(pkg)
             self.environment.authorless_services.remove(service)
 
-            d_copy = dict(self.environment.service_stream_map)
-            for k, v in self.environment.service_stream_map.items():
+            d_copy = dict(self.environment.service_stream_map[Transport.TCP])
+            for k, v in self.environment.service_stream_map[
+                    Transport.TCP].items():
                 if v == service:
-                    del d_copy[key]
-            self.environment.service_stream_map = d_copy
+                    del d_copy[k]
+            self.environment.service_stream_map[Transport.TCP] = d_copy
 
     def process_existing_stream(self, pkg, device, stream):
         if hasattr(pkg.http, 'user_agent'):
@@ -192,10 +223,13 @@ class Environment(object):
 
         self.http_handler = HTTPHandler(self)
         self.tcp_handler = TCPHandler(self)
+        self.dns_handler = DNSHandler(self)
 
         self.ua_analyzer = ua_analyzer
         self.inference_engine = inference_engine
         self.ip_analyzer = ip_analyzer
+
+        self.address_host = {}
 
     def prepare(self):
         self.device_stream_map = {
@@ -215,8 +249,13 @@ class Environment(object):
         layers = [each.layer_name for each in pkg.layers]
         if 'http' in layers and 'tcp' in layers:
             self.http_handler.process(pkg)
-        elif 'ssl' in layers or layers[-1] == 'tcp':
+        elif layers[-1] == 'tcp' or 'ssl' in layers:
             self.tcp_handler.process(pkg)
+        elif 'dns' == layers[-1]:
+            self.dns_handler.process(pkg)
+
+    def find_host(self, address):
+        return self.address_host.get(address)
 
     def previously_analized_stream(self, pkg):
         return self.has_device_from_stream(
@@ -266,30 +305,3 @@ class Environment(object):
         device = Device(self.inference_engine)
         self.devices.append(device)
         return device
-
-    # def __dns_handler(self, pkg):
-    #     if is_query(pkg):
-    #         stream = streams.DNSStream(pkg.udp.stream, pkg.dns.qry_name,
-    #                                    **create_stream_dict(pkg))
-    #         d = Device.from_stream(stream, pkg)
-    #         self.devices.append(d)
-    #         self.map[Transport.UDP][stream.number] = (d, stream)
-    #     else:
-    #         pass
-
-    # def __ssl_handler(self, pkg):
-    #     try:
-    #         device, stream = self.locate(pkg)
-    #         device.update(stream, pkg)
-    #         return
-    #     except LookupError:
-    #         if is_client_hello(pkg):
-    #             stream = streams.SSLStream(pkg.tcp.stream,
-    #                                        get_cipher_suite(pkg),
-    #                                        **create_stream_dict(pkg))
-    #             d = Device.from_stream(stream, pkg)
-    #             self.devices.append(d)
-    #             self.map[Transport.TCP][stream.number] = (d, stream)
-    #         else:
-    #             # TODO handle different tls pkgs
-    #             pass

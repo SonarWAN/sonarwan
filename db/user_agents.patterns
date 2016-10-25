@@ -32,6 +32,12 @@ Mozilla/5.0 \((?P<DEV_family>[\w]+); Intel (?P<DEV_os_family>Mac OS X) (?P<DEV_o
 # iOS/9.3.1 (13E238) dataaccessd/1.0
 (?P<DEV_os_family>[\w\+]+)\/(?P<DEV_os_version>[\d\.]+) \((?P<DEV_os_build>[\w]+)\) (?P<APP_name>[\w\d]+)\/(?P<APP_version>[\d\.]+)
 
+# netflix-ios-app 
+(?P<APP_name>netflix)\-(?P<DEV_os_family>ios)\-app
+
+# AppleCoreMedia/1.0.0.12A365 (iPad; U; CPU OS 8_0 like Mac OS X; en_us)
+(?P<APP_name>[a-zA-Z]+)\/[\w\.]+ \((?P<DEV_model>[a-zA-Z]+); U; CPU OS (?P<DEV_os_version>[\d\_]+) like Mac OS X; [\w]+\)
+
 #######################################################################################################################################################
 # Android
 
