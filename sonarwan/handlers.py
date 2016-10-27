@@ -100,15 +100,25 @@ class TCPHandler(Handler):
             self.environment.temporal_stream_map[Transport.TCP][
                 pkg.tcp.stream].append((time, length))
 
-    def process_new_stream(self, pkg):
+    def search_service_name(self, pkg):
         service_name = self.environment.ip_analyzer.find_service(pkg.ip.dst)
-        host = self.environment.find_host(pkg.ip.dst)
+        if service_name:
+            return service_name
+        else:
+            host = self.environment.find_host(pkg.ip.dst)
+            if host:
+                return self.environment.url_analyzer.find_service(
+                    host
+                ) or self.environment.url_analyzer.aggressive_find_service(
+                    host) or get_significant_url(host, 4)
+            else:
+                return None
+
+    def process_new_stream(self, pkg):
+        service_name = self.search_service_name(pkg)
 
         if service_name:
             self.process_service(service_name, pkg)
-        elif host:
-            host = get_significant_url(host, 4)
-            self.process_service(host, pkg)
         else:
             self.environment.temporal_stream_map[Transport.TCP][
                 pkg.tcp.stream] = [(pkg.sniff_time, pkg.length)]

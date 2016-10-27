@@ -23,8 +23,11 @@ class SonarWan(object):
 
         ip_analyzer = main_tools.IPAnalyzer(self.arguments.user_ips_directory)
 
+        url_analyzer = main_tools.URLAnalyzer(
+            self.arguments.user_urls_directory)
+
         self.environment = Environment(ua_analyzer, inference_engine,
-                                       ip_analyzer)
+                                       ip_analyzer, url_analyzer)
         self.i = 0
 
         self.start_time = time.time()

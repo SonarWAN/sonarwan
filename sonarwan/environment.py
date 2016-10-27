@@ -6,7 +6,8 @@ import handlers
 
 
 class Environment(object):
-    def __init__(self, ua_analyzer, inference_engine, ip_analyzer):
+    def __init__(self, ua_analyzer, inference_engine, ip_analyzer,
+                 url_analyzer):
         self.devices = []
         self.authorless_services = []
 
@@ -17,6 +18,7 @@ class Environment(object):
         self.ua_analyzer = ua_analyzer
         self.inference_engine = inference_engine
         self.ip_analyzer = ip_analyzer
+        self.url_analyzer = url_analyzer
 
         self.address_host = {}
 

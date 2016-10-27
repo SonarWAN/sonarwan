@@ -203,6 +203,73 @@ class UserAgentAnalyzer(object):
         return {'device_args': device_args, 'app_args': app_args}
 
 
+class URLAnalyzer(object):
+    def __init__(self, user_urls_directory):
+        self.service_map = {}
+        self.aggressive_service_map = {}
+
+        self.load_url_files(user_urls_directory)
+
+        self.not_found_cache = set()
+        self.found_cache = {}
+
+    def load_url_files(self, user_urls_directory):
+        self.load_files(paths.ABSOLUTE_URLS_DIR, self.service_map)
+        self.load_files(paths.AGGRESSIVE_URLS_DIR, self.aggressive_service_map)
+
+        if user_urls_directory:
+            self.load_files(user_urls_directory, self.aggressive_service_map)
+
+    def load_files(self, path, data_map):
+        try:
+            files = [f for f in listdir(path) if isfile(join(path, f))]
+            files = filter(lambda x: x[-5:] == '.urls', files)
+
+            for each in files:
+                name = each[:-5]
+                data_map[name] = set()
+                full_path = path + each
+                with open(full_path) as f:
+                    content = f.read().splitlines()
+                for line in content:
+                    if line and line[0] != '#':
+                        data_map[name].add(line)
+
+        except:
+            print('Invalid directory or file format')
+            raise
+
+    def find_service(self, url):
+        if url in self.not_found_cache:
+            return None
+
+        name = self.found_cache.get(url)
+        if name:
+            return name
+        else:
+            for k, v in self.service_map.items():
+                if url in v:
+                    self.found_cache[url] = k
+                    return k
+
+            self.not_found_cache.add(url)
+            return None
+
+    def aggressive_find_service(self, url):
+        for k, v in self.aggressive_service_map.items():
+            for each in v:
+                dif = len(url) - len(each)
+                if dif < 0:
+                    continue
+                match = True
+                for i in range(len(each) - 1, -1, -1):
+                    if each[i] != url[i + dif]:
+                        match = False
+                if match:
+                    return k
+        return None
+
+
 class IPAnalyzer(object):
     def __init__(self, user_ips_directory):
         self.service_map = {}
@@ -224,14 +291,13 @@ class IPAnalyzer(object):
 
             for each in files:
                 name = each[:-4]
-                self.service_map[name] = []
+                self.service_map[name] = set()
                 full_path = path + each
                 with open(full_path) as f:
                     content = f.read().splitlines()
                 for line in content:
                     if line and line[0] != '#':
-                        self.service_map[name].append(
-                            ipaddress.ip_network(line))
+                        self.service_map[name].add(ipaddress.ip_network(line))
 
         except:
             print('Invalid inference directory or file format')
