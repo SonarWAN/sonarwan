@@ -65,29 +65,44 @@ class TCPHandler(Handler):
 
         if self.needs_processing(pkg):
             self.process_new_stream(pkg)
+
         else:
             self.process_existing_stream(pkg)
 
     def process_existing_stream(self, pkg):
-
-        if self.environment.has_service_from_stream(pkg):
-            service = self.environment.locate_service(pkg)
-            service.add_activity(pkg.sniff_time, pkg.length)
+        time, length = pkg.sniff_time, pkg.length
 
         if self.environment.has_device_from_stream(pkg):
-            device, stream = self.environment.locate_device(pkg)
-            device.add_activity(pkg.sniff_time, pkg.length)
-            service = device.stream_to_service.get(stream.number)
+            device = self.environment.locate_device(pkg)
+            device.add_activity(time, length)
+            service = device.stream_to_service.get(pkg.tcp.stream)
             if service:
-                service.add_activity(pkg.sniff_time, pkg.length)
+                service.add_activity(time, length)
+
+        elif self.environment.has_service_from_stream(pkg):
+            service = self.environment.locate_service(pkg)
+            service.add_activity(time, length)
 
         elif self.environment.has_temporal_stream(pkg):
             self.environment.temporal_stream_map[Transport.TCP][
-                pkg.tcp.stream].append((pkg.sniff_time, pkg.length))
+                pkg.tcp.stream].append((time, length))
 
-    def process_service(self, service_name, pkg, stream):
+    def process_new_stream(self, pkg):
+        service_name = self.environment.ip_analyzer.find_service(pkg.ip.dst)
+        host = self.environment.find_host(pkg.ip.dst)
+
+        if service_name:
+            self.process_service(service_name, pkg)
+        elif host:
+            self.process_service(host, pkg)
+        else:
+            self.environment.temporal_stream_map[Transport.TCP][
+                pkg.tcp.stream] = [(pkg.sniff_time, pkg.length)]
+
+    def process_service(self, service_name, pkg):
         service = self.environment.get_existing_authorless_service(
             service_name)
+
         if not service:
             service = AuthorlessService()
             service.characteristics['name'] = service_name
@@ -95,24 +110,8 @@ class TCPHandler(Handler):
 
         service.add_activity(pkg.sniff_time, pkg.length)
 
-        service.add_stream(stream)
-
         self.environment.service_stream_map[Transport.TCP][
             pkg.tcp.stream] = service
-
-    def process_new_stream(self, pkg):
-        stream = streams.TCPStream(pkg.tcp.stream, **create_stream_dict(pkg))
-
-        service_name = self.environment.ip_analyzer.find_service(pkg.ip.dst)
-        host = self.environment.find_host(pkg.ip.dst)
-
-        if service_name:
-            self.process_service(service_name, pkg, stream)
-        elif host:
-            self.process_service(host, pkg, stream)
-        else:
-            self.environment.temporal_stream_map[Transport.TCP][
-                pkg.tcp.stream] = [(pkg.sniff_time, pkg.length)]
 
     def needs_processing(self, pkg):
         return not self.environment.previously_analized_stream(pkg)
@@ -121,18 +120,18 @@ class TCPHandler(Handler):
 class HTTPHandler(Handler):
     def process(self, pkg):
 
-        self.remove_unnecessary_services(pkg)
+        if self.environment.has_device_from_stream(pkg):
+            self.remove_unnecessary_services(pkg)
 
-        t = self.environment.locate_device(pkg)
-        if t:
-            device, stream = t[0], t[1]
-            self.process_existing_stream(pkg, device, stream)
+            device = self.environment.locate_device(pkg)
+            self.process_existing_stream(pkg, device)
+
         else:
-            if is_request(pkg):
-                self.process_new_stream(pkg)
+            self.process_new_stream(pkg)
 
     def remove_unnecessary_services(self, pkg):
         if self.environment.has_service_from_stream(pkg):
+
             service = self.environment.locate_service(pkg)
             self.environment.authorless_services.remove(service)
 
@@ -143,24 +142,55 @@ class HTTPHandler(Handler):
                     del d_copy[k]
             self.environment.service_stream_map[Transport.TCP] = d_copy
 
-    def process_existing_stream(self, pkg, device, stream):
+    def process_existing_stream(self, pkg, device):
+
+        def action(device_args, app_args):
+            device.update(device_args, app_args, pkg.tcp.stream)
+
         if hasattr(pkg.http, 'user_agent'):
             user_agent = pkg.http.user_agent
-            self.analyze_user_agent(user_agent, stream, pkg, device)
-        else:
+            self.process_user_agent(user_agent, action)
+
+        time, length = pkg.sniff_time, pkg.length
+
+        device.add_activity(time, length)
+
+        service = device.stream_to_service.get(pkg.tcp.stream)
+        if service:
+            service.add_activity(time, length)
+
+    def process_new_stream(self, pkg):
+
+        def action(device_args, app_args):
+            device = self.solve_device(device_args, app_args)
+            device.update(device_args, app_args, pkg.tcp.stream)
+
+            self.environment.device_stream_map[Transport.TCP][
+                pkg.tcp.stream] = device
+
             device.add_activity(pkg.sniff_time, pkg.length)
-            service = device.stream_to_service.get(stream.number)
+
+            service = device.stream_to_service.get(pkg.tcp.stream)
+
             if service:
                 service.add_activity(pkg.sniff_time, pkg.length)
 
-    def process_new_stream(self, pkg):
-        stream = streams.HTTPStream(pkg.tcp.stream, **create_stream_dict(pkg))
+            if self.environment.has_temporal_stream(pkg):
 
-        if hasattr(pkg.http, 'user_agent'):
+                for each in self.environment.locate_temporal(pkg):
+                    device.add_activity(each[0], each[1])
+                    if service:
+                        service.add_activity(each[0], each[1])
+
+                del self.environment.temporal_stream_map[Transport.TCP][pkg.tcp.stream]
+
+            self.remove_unnecessary_services(pkg)
+
+        if is_request(pkg) and hasattr(pkg.http, 'user_agent'):
             user_agent = pkg.http.user_agent
-            self.analyze_user_agent(user_agent, stream, pkg)
+            self.process_user_agent(user_agent, action)
 
-    def analyze_user_agent(self, user_agent, stream, pkg, device_param=None):
+    def process_user_agent(self, user_agent, action):
 
         matchers = self.environment.ua_analyzer.get_best_match(user_agent)
 
@@ -168,19 +198,9 @@ class HTTPHandler(Handler):
         app_args = matchers.get('app_args')
 
         if device_args or app_args:
+            action(device_args, app_args)
 
-            if not device_param:
-                device = self.create_or_update_device(device_args, app_args,
-                                                      pkg, stream)
-                device.streams.append(stream)
-                self.environment.device_stream_map[Transport.TCP][
-                    stream.number] = (device, stream)
-
-            else:
-                device_param.update(device_args, app_args,
-                                    [(pkg.sniff_time, pkg.length)], stream)
-
-    def create_or_update_device(self, device_args, app_args, pkg, stream):
+    def solve_device(self, device_args, app_args):
         devices = []
         max_score = 0
         for d in self.environment.devices:
@@ -194,12 +214,5 @@ class HTTPHandler(Handler):
             device = random.choice(devices)
         else:
             device = self.environment.create_device()
-
-        tuple_list = [(pkg.sniff_time, pkg.length)]
-        if self.environment.has_temporal_stream(pkg):
-            for each in self.environment.locate_temporal(pkg):
-                tuple_list.append((each[0], each[1]))
-
-        device.update(device_args, app_args, tuple_list, stream)
 
         return device

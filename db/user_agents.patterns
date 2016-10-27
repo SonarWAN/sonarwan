@@ -60,7 +60,7 @@ Mozilla/5.0 \(X11; (?P<DEV_os_family>Linux) (?P<DEV_system_architecture>[\w]+)\)
 (?P<DEV_os_brand>[\w]+) NCSI
 
 # Mozilla/5.0 (Windows NT 10.0; WOW64; rv:48.0) Gecko/20100101 Firefox/48.0
-Mozilla/5.0 \((?P<DEV_os_family>[\w]+) NT (?P<DEV_os_version>[\d\.]+); WOW64; rv:[\d\.]+\) Gecko\/(?P<app_chrome_gecko_version>[\d\.]+) Firefox\/(?P<app_chrome_firefox_version>[\d\.]+)
+Mozilla/5.0 \((?P<DEV_os_family>[\w]+) NT (?P<DEV_os_version>[\d\.]+); WOW64; rv:[\d\.]+\) Gecko\/(?P<APP_gecko_version>[\d\.]+) (?P<APP_name>Firefox)\/(?P<APP_version>[\d\.]+)
 
 # Microsoft-CryptoAPI/10.0
 (?P<DEV_os_brand>Microsoft)\-CryptoAPI\/(?P<DEV_os_version>[\d\.]+)

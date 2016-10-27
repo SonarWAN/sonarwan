@@ -1,5 +1,4 @@
 import pyshark
-import sys
 import time
 import json
 
@@ -18,8 +17,10 @@ class SonarWan(object):
 
         ua_analyzer = main_tools.UserAgentAnalyzer(
             self.arguments.user_patterns_file)
+
         inference_engine = main_tools.InferenceEngine(
             self.arguments.user_inference_directory)
+
         ip_analyzer = main_tools.IPAnalyzer(self.arguments.user_ips_directory)
 
         self.environment = Environment(ua_analyzer, inference_engine,

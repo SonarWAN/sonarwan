@@ -36,15 +36,24 @@ class Environment(object):
 
     def update(self, pkg):
         layers = [each.layer_name for each in pkg.layers]
+
         if 'http' in layers and 'tcp' in layers:
             self.http_handler.process(pkg)
+
         elif layers[-1] == 'tcp' or 'ssl' in layers:
             self.tcp_handler.process(pkg)
+
         elif 'dns' == layers[-1]:
             self.dns_handler.process(pkg)
 
     def find_host(self, address):
         return self.address_host.get(address)
+
+    def get_existing_authorless_service(self, name):
+        for each in self.authorless_services:
+            if each.characteristics['name'] == name:
+                return each
+        return None
 
     def previously_analized_stream(self, pkg):
         return self.has_device_from_stream(
@@ -53,18 +62,6 @@ class Environment(object):
 
     def has_temporal_stream(self, pkg):
         return self.locate(pkg, self.temporal_stream_map) is not None
-
-    def has_authorless_service(self, name):
-        for each in self.authorless_services:
-            if each.characteristics['name'] == name:
-                return True
-        return False
-
-    def get_existing_authorless_service(self, name):
-        for each in self.authorless_services:
-            if each.characteristics['name'] == name:
-                return each
-        return None
 
     def has_device_from_stream(self, pkg):
         return self.locate_device(pkg) is not None
