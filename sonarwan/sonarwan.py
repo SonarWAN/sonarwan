@@ -73,12 +73,11 @@ class SonarwanRep(object):
     def init_devices(self, devices):
         self.devices = []
         for each in devices:
-            self.services = []
+            services = []
             for s in each.services:
-                self.services.append(
-                    ServiceLess(s.characteristics, s.activity))
+                services.append(ServiceLess(s.characteristics, s.activity))
             self.devices.append(
-                DeviceLess(self.services, each.characteristics, each.activity))
+                DeviceLess(services, each.characteristics, each.activity))
 
     def init_services(self, services):
         self.authorless_services = []

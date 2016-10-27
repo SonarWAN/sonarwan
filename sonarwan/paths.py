@@ -4,6 +4,6 @@ INFERENCE_DIR = './db/inference/'
 IPS_DIR = './db/ips/'
 
 ABSOLUTE_URLS_DIR = './db/urls/absolute/'
-AGGRESSIVE_URLS_DIR = './db/urls/agressive/'
+AGGRESSIVE_URLS_DIR = './db/urls/aggressive/'
 
 MOBILE_DETECTOR_PATH = './db/serbanghita-Mobile-Detect-db.json'
