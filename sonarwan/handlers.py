@@ -143,7 +143,6 @@ class HTTPHandler(Handler):
             self.environment.service_stream_map[Transport.TCP] = d_copy
 
     def process_existing_stream(self, pkg, device):
-
         def action(device_args, app_args):
             device.update(device_args, app_args, pkg.tcp.stream)
 
@@ -160,7 +159,6 @@ class HTTPHandler(Handler):
             service.add_activity(time, length)
 
     def process_new_stream(self, pkg):
-
         def action(device_args, app_args):
             device = self.solve_device(device_args, app_args)
             device.update(device_args, app_args, pkg.tcp.stream)
@@ -182,7 +180,8 @@ class HTTPHandler(Handler):
                     if service:
                         service.add_activity(each[0], each[1])
 
-                del self.environment.temporal_stream_map[Transport.TCP][pkg.tcp.stream]
+                del self.environment.temporal_stream_map[Transport.TCP][
+                    pkg.tcp.stream]
 
             self.remove_unnecessary_services(pkg)
 
