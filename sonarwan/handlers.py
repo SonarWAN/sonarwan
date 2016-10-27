@@ -44,6 +44,19 @@ def get_cipher_suite(pkg):
     return list(map(lambda x: (x.raw_value, x.showname_value), cipher_suite))
 
 
+def get_significant_url(url, chars):
+    count = 0
+    for i in range(len(url) - 1, -1, -1):
+        if url[i] == '.':
+            if count > chars:
+                return url[i + 1:]
+            else:
+                count = 0
+        else:
+            count += 1
+    return url
+
+
 class Handler(object):
     def __init__(self, environment):
         self.environment = environment
@@ -94,6 +107,7 @@ class TCPHandler(Handler):
         if service_name:
             self.process_service(service_name, pkg)
         elif host:
+            host = get_significant_url(host, 4)
             self.process_service(host, pkg)
         else:
             self.environment.temporal_stream_map[Transport.TCP][
