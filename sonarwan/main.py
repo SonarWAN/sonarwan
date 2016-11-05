@@ -6,7 +6,7 @@ def main():
     parser = Arguments.create_parser()
     args = parser.parse_args()
     arguments = Arguments(args.json, args.patterns, args.inference, args.ips,
-                          args.urls)
+                          args.urls, args.progress)
 
     sonarwan = SonarWan(arguments)
 

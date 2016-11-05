@@ -38,10 +38,14 @@ class SonarWan(object):
         self.environment.prepare()
         self.file_count += 1
 
+        FRAMES_TO_INFORM = 10
+
         for pkg in cap:
             self.i += 1
             if not self.arguments.json_output:
                 utils.show_progress(self.i)
+            elif self.arguments.progress_output and self.i % FRAMES_TO_INFORM == 0:
+                utils.inform_json_progress(self.i, path)
             self.environment.update(pkg)
 
     def print_info(self):
@@ -87,4 +91,9 @@ class SonarwanRep(object):
 
     def toJSON(self):
         return json.dumps(
-            self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+            {
+                'Report': self
+            },
+            default=lambda o: o.__dict__,
+            sort_keys=True,
+            indent=4)

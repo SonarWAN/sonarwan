@@ -2,11 +2,17 @@ import sys
 import time
 from tabulate import tabulate
 import datetime
+import json
 
 
 def show_progress(pkg_index):
     sys.stdout.write('\rProcessed packets {}'.format(pkg_index))
     sys.stdout.flush()
+
+
+def inform_json_progress(number, path):
+    update = {'Packets': number, 'Current File': path}
+    print(json.dumps({'update': update}))
 
 
 def pretty_print(sonarwan):
