@@ -99,24 +99,42 @@ class ComplementaryUAAnalyzers(object):
     def run_ua_parser(self, user_agent, device_args, app_args):
         parsed_string = user_agent_parser.Parse(user_agent)
 
-        brand = parsed_string.get('device').get('brand')
+        os_family = None
 
-        if brand and ComplementaryUAAnalyzers.has_useful_data(
-                brand) and 'brand' not in device_args:
-            device_args['brand'] = brand
+        if parsed_string.get('device'):
+            brand = parsed_string.get('device').get('brand')
 
-        os_family = parsed_string.get('os').get('family')
+            if brand and ComplementaryUAAnalyzers.has_useful_data(
+                    brand) and 'brand' not in device_args:
+                device_args['brand'] = brand
 
-        if os_family and ComplementaryUAAnalyzers.has_useful_data(
-                os_family) and 'os_family' not in device_args:
-            device_args['os_family'] = os_family
+        if parsed_string.get('os'):
+            os_family = parsed_string.get('os').get('family')
 
-        if 'os_version' not in device_args:
+            if os_family and ComplementaryUAAnalyzers.has_useful_data(
+                    os_family) and 'os_family' not in device_args:
+                device_args['os_family'] = os_family
+
+        if 'os_version' not in device_args and parsed_string.get('os'):
             version = ComplementaryUAAnalyzers.get_version_from_ua_parser(
                 parsed_string['os'])
 
             if version:
                 device_args['os_version'] = version
+
+        if parsed_string.get('user_agent'):
+            agent = parsed_string.get('user_agent').get('family')
+
+            # Most times os_family is the same as agent (example: Android)
+            # Only add service if is not the same as os
+
+            if os_family and agent and os_family != agent and not app_args:
+                app_args['name'] = agent
+                version = ComplementaryUAAnalyzers.get_version_from_ua_parser(
+                    parsed_string['user_agent'])
+
+                if version:
+                    app_args['version'] = version
 
     def has_useful_data(data):
         return data != 'Other' and data != 'Generic'
