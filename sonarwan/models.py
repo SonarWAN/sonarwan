@@ -10,6 +10,12 @@ def merge_dicts(base, to_merge, operation):
             base[k] = v
 
 
+def unmerge_dicts(base, to_unmerge, operation):
+    for k, v in to_unmerge.items():
+        if k in base:
+            base[k] = operation(base[k], v)
+
+
 def similarity(base, k, v):
     if k in base:
         compare_value = base[k]
@@ -67,6 +73,14 @@ class AuthorlessService(Service):
         self.activity_per_stream[stream][
             time_string] = self.activity_per_stream[stream].get(
                 time_string, 0) + int(bytes_count)
+
+    def remove_activity_from_stream(self, stream):
+        def substract_fn(v1, v2):
+            return v1 - v2
+
+        unmerge_dicts(self.activity, self.activity_per_stream[stream],
+                      substract_fn)
+        del self.activity_per_stream[stream]
 
 
 class Device(object):

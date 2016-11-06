@@ -216,7 +216,8 @@ class HTTPHandler(Handler):
                 # not the whole service, as it could be consumed
                 # by other devices also (think WhatsApp)
 
-                del existing_service.activity_per_stream[pkg.tcp.stream]
+                existing_service.remove_activity_from_stream(pkg.tcp.stream)
+
                 del self.environment.service_stream_map[Transport.TCP][
                     pkg.tcp.stream]
 
