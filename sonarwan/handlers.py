@@ -44,17 +44,17 @@ def get_cipher_suite(pkg):
     return list(map(lambda x: (x.raw_value, x.showname_value), cipher_suite))
 
 
-def get_significant_url(url, chars):
+def get_significant_service_from_url(url, chars):
     count = 0
     for i in range(len(url) - 1, -1, -1):
         if url[i] == '.':
             if count > chars:
-                return url[i + 1:]
+                return {'name': url[i + 1:]}
             else:
                 count = 0
         else:
             count += 1
-    return url
+    return {'name': url}
 
 
 class Handler(object):
@@ -100,36 +100,37 @@ class TCPHandler(Handler):
             self.environment.temporal_stream_map[Transport.TCP][
                 pkg.tcp.stream].append((time, length))
 
-    def search_service_name(self, pkg):
-        service_name = self.environment.ip_analyzer.find_service(pkg.ip.dst)
-        if service_name:
-            return service_name
+    def search_service(self, pkg):
+        service_characteristics = self.environment.service_analyzer.find_service_from_ip(
+            pkg.ip.dst)
+        if service_characteristics:
+            return service_characteristics
         else:
             host = self.environment.find_host(pkg.ip.dst)
             if host:
-                return self.environment.url_analyzer.absolute_find_service(
+                return self.environment.service_analyzer.find_service_from_absolute_url(
                     host
-                ) or self.environment.url_analyzer.intensive_find_service(
-                    host) or get_significant_url(host, 4)
+                ) or self.environment.service_analyzer.find_service_from_url(
+                    host) or get_significant_service_from_url(host, 4)
             else:
                 return None
 
     def process_new_stream(self, pkg):
-        service_name = self.search_service_name(pkg)
+        service_characteristics = self.search_service(pkg)
 
-        if service_name:
-            self.process_service(service_name, pkg)
+        if service_characteristics:
+            self.process_service(service_characteristics, pkg)
         else:
             self.environment.temporal_stream_map[Transport.TCP][
                 pkg.tcp.stream] = [(pkg.sniff_time, pkg.length)]
 
-    def process_service(self, service_name, pkg):
+    def process_service(self, service_characteristics, pkg):
         service = self.environment.get_existing_authorless_service(
-            service_name)
+            service_characteristics['name'])
 
         if not service:
             service = AuthorlessService()
-            service.characteristics['name'] = service_name
+            service.characteristics = service_characteristics
             self.environment.authorless_services.append(service)
 
         service.add_activity(pkg.sniff_time, pkg.length)

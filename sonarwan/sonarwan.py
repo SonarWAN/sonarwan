@@ -24,11 +24,9 @@ class SonarWan(object):
         service_analyzer = main_tools.ServiceAnalyzer(
             self.arguments.user_services_directory)
 
-        ip_analyzer = service_analyzer.ip_analyzer
-        url_analyzer = service_analyzer.url_analyzer
-
         self.environment = Environment(ua_analyzer, inference_engine,
-                                       ip_analyzer, url_analyzer)
+                                       service_analyzer)
+
         self.i = 0
 
         self.start_time = time.time()

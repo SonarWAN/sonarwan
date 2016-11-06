@@ -207,6 +207,8 @@ class UserAgentAnalyzer(object):
 class ServiceAnalyzer(object):
     def __init__(self, user_services_directory):
 
+        self.service_info_map = {}
+
         self.url_analyzer = URLAnalyzer()
         self.ip_analyzer = IPAnalyzer()
 
@@ -218,6 +220,12 @@ class ServiceAnalyzer(object):
     def load_service(self, content):
 
         name = content['name']
+
+        self.service_info_map[name] = {
+            k: v
+            for k, v in content.items()
+            if k not in ['urls', 'ips', 'absolute-urls']
+        }
 
         if content.get('absolute-urls'):
             self.url_analyzer.absolute_service_map[name] = set(content[
@@ -250,6 +258,22 @@ class ServiceAnalyzer(object):
         except:
             print('Invalid directory or file format')
             raise
+
+    def find_service_from_ip(self, ipaddr):
+        return self._generic_find(ipaddr, self.ip_analyzer.find_service)
+
+    def find_service_from_absolute_url(self, url):
+        return self._generic_find(url, self.url_analyzer.absolute_find_service)
+
+    def find_service_from_url(self, url):
+        return self._generic_find(url,
+                                  self.url_analyzer.intensive_find_service)
+
+    def _generic_find(self, parameter, function):
+        name = function(parameter)
+        if name:
+            return self.service_info_map[name]
+        return None
 
 
 class URLAnalyzer(object):
