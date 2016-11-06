@@ -53,7 +53,20 @@ class Service(object):
 
 
 class AuthorlessService(Service):
-    pass
+    def __init__(self):
+        super().__init__()
+
+        # This services can have multiple streams from different devices
+        # that are consuming this service. For example WhatsApp can be 
+        # used from different devices in same capture
+
+        self.activity_per_stream = {}
+
+    def add_activity_to_stream(self, stream, time, bytes_count):
+        time_string = time.strftime('%D %H:%M:%S')
+        self.activity_per_stream[stream][
+            time_string] = self.activity_per_stream[stream].get(
+                time_string, 0) + int(bytes_count)
 
 
 class Device(object):
