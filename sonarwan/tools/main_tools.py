@@ -2,6 +2,7 @@ import paths
 import re
 import csv
 import ipaddress
+import yaml
 
 from os import listdir
 from os.path import isfile, join
@@ -203,43 +204,63 @@ class UserAgentAnalyzer(object):
         return {'device_args': device_args, 'app_args': app_args}
 
 
-class URLAnalyzer(object):
-    def __init__(self, user_urls_directory):
-        self.service_map = {}
-        self.aggressive_service_map = {}
+class ServiceAnalyzer(object):
+    def __init__(self, user_services_directory):
 
-        self.load_url_files(user_urls_directory)
+        self.url_analyzer = URLAnalyzer()
+        self.ip_analyzer = IPAnalyzer()
 
-        self.not_found_cache = set()
-        self.found_cache = {}
+        self.load_files(paths.SERVICES_DIRECTORY_PATH)
 
-    def load_url_files(self, user_urls_directory):
-        self.load_files(paths.ABSOLUTE_URLS_DIR, self.service_map)
-        self.load_files(paths.AGGRESSIVE_URLS_DIR, self.aggressive_service_map)
+        if user_services_directory:
+            self.load_files(self, user_services_directory)
 
-        if user_urls_directory:
-            self.load_files(user_urls_directory, self.aggressive_service_map)
+    def load_service(self, content):
 
-    def load_files(self, path, data_map):
+        name = content['name']
+
+        if content.get('absolute-urls'):
+            self.url_analyzer.absolute_service_map[name] = set(content[
+                'absolute-urls'])
+
+        if content.get('urls'):
+            self.url_analyzer.service_map[name] = set(content['urls'])
+
+        if content.get('ips'):
+            self.ip_analyzer.service_map[name] = set()
+            for each in content['ips']:
+                self.ip_analyzer.service_map[name].add(
+                    ipaddress.ip_network(each))
+
+    def load_files(self, path):
         try:
             files = [f for f in listdir(path) if isfile(join(path, f))]
-            files = filter(lambda x: x[-5:] == '.urls', files)
+            files = filter(lambda x: x[-5:] == '.yaml', files)
 
             for each in files:
-                name = each[:-5]
-                data_map[name] = set()
                 full_path = path + each
                 with open(full_path) as f:
-                    content = f.read().splitlines()
-                for line in content:
-                    if line and line[0] != '#':
-                        data_map[name].add(line)
+                    content = yaml.load(f)
 
+                if type(content) is list:
+                    for each in content:
+                        self.load_service(each)
+                else:
+                    self.load_service(content)
         except:
             print('Invalid directory or file format')
             raise
 
-    def find_service(self, url):
+
+class URLAnalyzer(object):
+    def __init__(self):
+        self.service_map = {}
+        self.absolute_service_map = {}
+
+        self.not_found_cache = set()
+        self.found_cache = {}
+
+    def absolute_find_service(self, url):
         if url in self.not_found_cache:
             return None
 
@@ -247,7 +268,7 @@ class URLAnalyzer(object):
         if name:
             return name
         else:
-            for k, v in self.service_map.items():
+            for k, v in self.absolute_service_map.items():
                 if url in v:
                     self.found_cache[url] = k
                     return k
@@ -255,8 +276,8 @@ class URLAnalyzer(object):
             self.not_found_cache.add(url)
             return None
 
-    def aggressive_find_service(self, url):
-        for k, v in self.aggressive_service_map.items():
+    def intensive_find_service(self, url):
+        for k, v in self.service_map.items():
             for each in v:
                 dif = len(url) - len(each)
                 if dif < 0:
@@ -271,37 +292,11 @@ class URLAnalyzer(object):
 
 
 class IPAnalyzer(object):
-    def __init__(self, user_ips_directory):
+    def __init__(self):
         self.service_map = {}
-        self.load_ip_files(user_ips_directory)
 
         self.not_found_cache = set()
         self.found_cache = {}
-
-    def load_ip_files(self, user_ips_directory):
-        self.load_files(paths.IPS_DIR)
-
-        if user_ips_directory:
-            self.load_files(user_ips_directory)
-
-    def load_files(self, path):
-        try:
-            files = [f for f in listdir(path) if isfile(join(path, f))]
-            files = filter(lambda x: x[-4:] == '.ips', files)
-
-            for each in files:
-                name = each[:-4]
-                self.service_map[name] = set()
-                full_path = path + each
-                with open(full_path) as f:
-                    content = f.read().splitlines()
-                for line in content:
-                    if line and line[0] != '#':
-                        self.service_map[name].add(ipaddress.ip_network(line))
-
-        except:
-            print('Invalid inference directory or file format')
-            raise
 
     def find_service(self, ipaddr):
         if ipaddr in self.not_found_cache:

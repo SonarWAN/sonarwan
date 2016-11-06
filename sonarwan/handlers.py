@@ -107,9 +107,9 @@ class TCPHandler(Handler):
         else:
             host = self.environment.find_host(pkg.ip.dst)
             if host:
-                return self.environment.url_analyzer.find_service(
+                return self.environment.url_analyzer.absolute_find_service(
                     host
-                ) or self.environment.url_analyzer.aggressive_find_service(
+                ) or self.environment.url_analyzer.intensive_find_service(
                     host) or get_significant_url(host, 4)
             else:
                 return None

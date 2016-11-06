@@ -5,8 +5,8 @@ from sonarwan import SonarWan
 def main():
     parser = Arguments.create_parser()
     args = parser.parse_args()
-    arguments = Arguments(args.json, args.patterns, args.inference, args.ips,
-                          args.urls, args.progress)
+    arguments = Arguments(args.json, args.patterns, args.inference,
+                          args.services, args.progress)
 
     sonarwan = SonarWan(arguments)
 

@@ -1,0 +1,6 @@
+name: Spotify
+type: Music Streaming
+urls:
+    - scdn.co
+    - spotify.com
+    - spotify.com.edgesuite.net

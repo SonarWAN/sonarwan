@@ -1,0 +1,11 @@
+name: Amazon
+type: e-commerce
+urls:
+    - amazon-adsystem.com
+    - amazonaws.com
+    - compute.amazonaws.com
+    - s3.amazonaws.com
+    - assoc-amazon.co.uk
+    - assoc-amazon.com
+    - twitch.tv
+    - c9.io

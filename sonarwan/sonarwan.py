@@ -21,10 +21,11 @@ class SonarWan(object):
         inference_engine = main_tools.InferenceEngine(
             self.arguments.user_inference_directory)
 
-        ip_analyzer = main_tools.IPAnalyzer(self.arguments.user_ips_directory)
+        service_analyzer = main_tools.ServiceAnalyzer(
+            self.arguments.user_services_directory)
 
-        url_analyzer = main_tools.URLAnalyzer(
-            self.arguments.user_urls_directory)
+        ip_analyzer = service_analyzer.ip_analyzer
+        url_analyzer = service_analyzer.url_analyzer
 
         self.environment = Environment(ua_analyzer, inference_engine,
                                        ip_analyzer, url_analyzer)
