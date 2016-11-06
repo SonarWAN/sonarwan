@@ -146,26 +146,12 @@ class HTTPHandler(Handler):
     def process(self, pkg):
 
         if self.environment.has_device_from_stream(pkg):
-            self.remove_unnecessary_services(pkg)
 
             device = self.environment.locate_device(pkg)
             self.process_existing_stream(pkg, device)
 
         else:
             self.process_new_stream(pkg)
-
-    def remove_unnecessary_services(self, pkg):
-        if self.environment.has_service_from_stream(pkg):
-
-            service = self.environment.locate_service(pkg)
-            self.environment.authorless_services.remove(service)
-
-            d_copy = dict(self.environment.service_stream_map[Transport.TCP])
-            for k, v in self.environment.service_stream_map[
-                    Transport.TCP].items():
-                if v == service:
-                    del d_copy[k]
-            self.environment.service_stream_map[Transport.TCP] = d_copy
 
     def process_existing_stream(self, pkg, device):
         def action(device_args, app_args):
@@ -208,7 +194,26 @@ class HTTPHandler(Handler):
                 del self.environment.temporal_stream_map[Transport.TCP][
                     pkg.tcp.stream]
 
-            self.remove_unnecessary_services(pkg)
+            if self.environment.has_service_from_stream(pkg):
+
+                prev_service = self.environment.locate_service(pkg)
+
+                self.environment.authorless_services.remove(prev_service)
+
+                device.merge_activity(prev_service.activity)
+                if service:
+                    service.merge_activity(prev_service.activity)
+
+                # Wrong! Service can come from more than 1 device
+
+                d_copy = dict(self.environment.service_stream_map[
+                    Transport.TCP])
+                for k, v in self.environment.service_stream_map[
+                        Transport.TCP].items():
+                    if v == prev_service:
+                        del d_copy[k]
+
+                self.environment.service_stream_map[Transport.TCP] = d_copy
 
         if is_request(pkg) and hasattr(pkg.http, 'user_agent'):
             user_agent = pkg.http.user_agent

@@ -2,6 +2,14 @@ import csv
 import random
 
 
+def merge_dicts(base, to_merge, operation):
+    for k, v in to_merge.items():
+        if k in base:
+            base[k] = operation(base[k], v)
+        else:
+            base[k] = v
+
+
 def similarity(base, k, v):
     if k in base:
         compare_value = base[k]
@@ -37,6 +45,12 @@ class Service(object):
         self.activity[time_string] = self.activity.get(time_string,
                                                        0) + int(bytes_count)
 
+    def merge_activity(self, other_activity):
+        def sum_fn(v1, v2):
+            return v1 + v2
+
+        merge_dicts(self.activity, other_activity, sum_fn)
+
 
 class AuthorlessService(Service):
     pass
@@ -55,6 +69,12 @@ class Device(object):
         time_string = time.strftime('%D %H:%M:%S')
         self.activity[time_string] = self.activity.get(time_string,
                                                        0) + int(bytes_count)
+
+    def merge_activity(self, other_activity):
+        def sum_fn(v1, v2):
+            return v1 + v2
+
+        merge_dicts(self.activity, other_activity, sum_fn)
 
     def match_score(self, device_args, app_args):
         score = 0
