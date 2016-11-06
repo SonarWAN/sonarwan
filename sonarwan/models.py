@@ -1,5 +1,6 @@
 import csv
 import random
+from constants import Transport
 
 
 def merge_dicts(base, to_merge, operation):
@@ -66,21 +67,30 @@ class AuthorlessService(Service):
         # that are consuming this service. For example WhatsApp can be 
         # used from different devices in same capture
 
-        self.activity_per_stream = {}
+        self.activity_per_stream = {Transport.UDP: {}, Transport.TCP: {}}
 
-    def add_activity_to_stream(self, stream, time, bytes_count):
+    def add_activity_to_stream(self, protocol, stream, time, bytes_count):
         time_string = time.strftime('%D %H:%M:%S')
-        self.activity_per_stream[stream][
-            time_string] = self.activity_per_stream[stream].get(
+
+        if stream not in self.activity_per_stream[protocol]:
+            self.activity_per_stream[protocol][stream] = {}
+
+        self.activity_per_stream[protocol][stream][
+            time_string] = self.activity_per_stream[protocol][stream].get(
                 time_string, 0) + int(bytes_count)
 
-    def remove_activity_from_stream(self, stream):
+    def remove_activity_from_stream(self, protocol, stream):
         def substract_fn(v1, v2):
             return v1 - v2
 
-        unmerge_dicts(self.activity, self.activity_per_stream[stream],
-                      substract_fn)
-        del self.activity_per_stream[stream]
+        unmerge_dicts(self.activity,
+                      self.activity_per_stream[protocol][stream], substract_fn)
+        del self.activity_per_stream[protocol][stream]
+
+    def is_empty(self):
+        return self.activity_per_stream[
+            Transport.TCP] == {} and self.activity_per_stream[
+                Transport.UDP] == {}
 
 
 class Device(object):

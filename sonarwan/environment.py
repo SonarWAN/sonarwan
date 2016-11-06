@@ -14,6 +14,7 @@ class Environment(object):
         self.http_handler = handlers.HTTPHandler(self)
         self.tcp_handler = handlers.TCPHandler(self)
         self.dns_handler = handlers.DNSHandler(self)
+        self.udp_handler = handlers.UDPHandler(self)
 
         self.ua_analyzer = ua_analyzer
         self.inference_engine = inference_engine
@@ -47,6 +48,9 @@ class Environment(object):
 
         elif 'dns' == layers[-1]:
             self.dns_handler.process(pkg)
+
+        elif 'udp' in layers:
+            self.udp_handler.process(pkg)
 
     def find_host(self, address):
         return self.address_host.get(address)

@@ -73,7 +73,7 @@ class DNSHandler(Handler):
         return is_dns_response(pkg)
 
 
-class TCPHandler(Handler):
+class TransportHandler(Handler):
     def process(self, pkg):
 
         if self.needs_processing(pkg):
@@ -85,21 +85,24 @@ class TCPHandler(Handler):
     def process_existing_stream(self, pkg):
         time, length = pkg.sniff_time, pkg.length
 
+        stream = self.get_stream(pkg)
+
         if self.environment.has_device_from_stream(pkg):
             device = self.environment.locate_device(pkg)
             device.add_activity(time, length)
-            service = device.stream_to_service.get(pkg.tcp.stream)
+            service = device.stream_to_service.get(stream)
             if service:
                 service.add_activity(time, length)
 
         elif self.environment.has_service_from_stream(pkg):
             service = self.environment.locate_service(pkg)
             service.add_activity(time, length)
-            service.add_activity_to_stream(pkg.tcp.stream, time, length)
+            service.add_activity_to_stream(self.get_protocol(), stream, time,
+                                           length)
 
         elif self.environment.has_temporal_stream(pkg):
-            self.environment.temporal_stream_map[Transport.TCP][
-                pkg.tcp.stream].append((time, length))
+            self.environment.temporal_stream_map[self.get_protocol()][
+                stream].append((time, length))
 
     def search_service(self, pkg):
         service_characteristics = self.environment.service_analyzer.find_service_from_ip(
@@ -122,8 +125,8 @@ class TCPHandler(Handler):
         if service_characteristics:
             self.process_new_detected_service(service_characteristics, pkg)
         else:
-            self.environment.temporal_stream_map[Transport.TCP][
-                pkg.tcp.stream] = [(pkg.sniff_time, pkg.length)]
+            self.environment.temporal_stream_map[self.get_protocol()][
+                self.get_stream(pkg)] = [(pkg.sniff_time, pkg.length)]
 
     def process_new_detected_service(self, service_characteristics, pkg):
         service = self.environment.get_existing_authorless_service(
@@ -136,17 +139,34 @@ class TCPHandler(Handler):
 
         time, length = pkg.sniff_time, pkg.length
 
+        stream = self.get_stream(pkg)
+        protocol = self.get_protocol()
+
         service.add_activity(time, length)
 
         # Add stream to current service
-        service.activity_per_stream[pkg.tcp.stream] = {}
-        service.add_activity_to_stream(pkg.tcp.stream, time, length)
+        service.add_activity_to_stream(protocol, stream, time, length)
 
-        self.environment.service_stream_map[Transport.TCP][
-            pkg.tcp.stream] = service
+        self.environment.service_stream_map[protocol][stream] = service
 
     def needs_processing(self, pkg):
         return not self.environment.previously_analized_stream(pkg)
+
+
+class UDPHandler(TransportHandler):
+    def get_stream(self, pkg):
+        return pkg.udp.stream
+
+    def get_protocol(self):
+        return Transport.UDP
+
+
+class TCPHandler(TransportHandler):
+    def get_stream(self, pkg):
+        return pkg.tcp.stream
+
+    def get_protocol(self):
+        return Transport.TCP
 
 
 class HTTPHandler(Handler):
@@ -206,7 +226,7 @@ class HTTPHandler(Handler):
                 existing_service = self.environment.locate_service(pkg)
 
                 activity_from_stream = existing_service.activity_per_stream[
-                    pkg.tcp.stream]
+                    Transport.TCP][pkg.tcp.stream]
 
                 device.merge_activity(activity_from_stream)
                 if service:
@@ -216,14 +236,15 @@ class HTTPHandler(Handler):
                 # not the whole service, as it could be consumed
                 # by other devices also (think WhatsApp)
 
-                existing_service.remove_activity_from_stream(pkg.tcp.stream)
+                existing_service.remove_activity_from_stream(Transport.TCP,
+                                                             pkg.tcp.stream)
 
                 del self.environment.service_stream_map[Transport.TCP][
                     pkg.tcp.stream]
 
                 # Only remove authorless Service
                 # if no streams are left associated with it
-                if existing_service.activity_per_stream == {}:
+                if existing_service.is_empty():
                     self.environment.authorless_services.remove(
                         existing_service)
 
