@@ -38,19 +38,20 @@ class Environment(object):
         }
 
     def update(self, pkg):
-        layers = [each.layer_name for each in pkg.layers]
+        if hasattr(pkg, 'ip'):
+            layers = [each.layer_name for each in pkg.layers]
 
-        if 'http' in layers and 'tcp' in layers:
-            self.http_handler.process(pkg)
+            if 'http' in layers and 'tcp' in layers:
+                self.http_handler.process(pkg)
 
-        elif layers[-1] == 'tcp' or 'ssl' in layers:
-            self.tcp_handler.process(pkg)
+            elif layers[-1] == 'tcp' or 'ssl' in layers:
+                self.tcp_handler.process(pkg)
 
-        elif 'dns' == layers[-1]:
-            self.dns_handler.process(pkg)
+            elif 'dns' == layers[-1]:
+                self.dns_handler.process(pkg)
 
-        elif 'udp' in layers:
-            self.udp_handler.process(pkg)
+            elif 'udp' in layers:
+                self.udp_handler.process(pkg)
 
     def find_host(self, address):
         return self.address_host.get(address)
