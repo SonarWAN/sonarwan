@@ -235,7 +235,7 @@ class ServiceAnalyzer(object):
         self.load_files(paths.SERVICES_DIRECTORY_PATH)
 
         if user_services_directory:
-            self.load_files(self, user_services_directory)
+            self.load_files(user_services_directory)
 
     def load_service(self, content):
 
