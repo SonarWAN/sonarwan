@@ -38,6 +38,8 @@ class Service(object):
         self.activity = {}
         self.characteristics = {}
 
+        self.visited_hosts = {}
+
     def update_service(self, app_args):
         for k in app_args:
             current_value = self.characteristics.get(k)
@@ -51,6 +53,11 @@ class Service(object):
         time_string = time.strftime('%D %H:%M:%S')
         self.activity[time_string] = self.activity.get(time_string,
                                                        0) + int(bytes_count)
+
+    def add_visited_host(self, host, ip):
+        if host not in self.visited_hosts:
+            self.visited_hosts[host] = set()
+        self.visited_hosts[host].add(ip)
 
     def merge_activity(self, other_activity):
         def sum_fn(v1, v2):
@@ -100,12 +107,19 @@ class Device(object):
         self.activity = {}
         self.stream_to_service = {}
 
+        self.visited_hosts = {}
+
         self.inference_engine = inference_engine
 
     def add_activity(self, time, bytes_count):
         time_string = time.strftime('%D %H:%M:%S')
         self.activity[time_string] = self.activity.get(time_string,
                                                        0) + int(bytes_count)
+
+    def add_visited_host(self, host, ip):
+        if host not in self.visited_hosts:
+            self.visited_hosts[host] = set()
+        self.visited_hosts[host].add(ip)
 
     def merge_activity(self, other_activity):
         def sum_fn(v1, v2):

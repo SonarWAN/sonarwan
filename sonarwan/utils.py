@@ -41,6 +41,11 @@ def pretty_print(sonarwan):
         for k, v in d.activity.items():
             aux.append([k, v])
         print(tabulate(aux))
+        print('\nVisited Hosts:')
+        aux = []
+        for k, v in d.visited_hosts.items():
+            aux.append([k, v])
+        print(tabulate(aux))
         for j, s in enumerate(d.services):
             print()
             print("Service {}:".format(j + 1))
@@ -50,6 +55,11 @@ def pretty_print(sonarwan):
             print(tabulate(aux))
             aux = []
             for k, v in s.activity.items():
+                aux.append([k, v])
+            print(tabulate(aux))
+            print('\nVisited Hosts:')
+            aux = []
+            for k, v in s.visited_hosts.items():
                 aux.append([k, v])
             print(tabulate(aux))
         print()

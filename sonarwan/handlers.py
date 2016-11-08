@@ -57,6 +57,24 @@ def get_significant_service_from_url(url, chars):
     return {'name': url}
 
 
+def get_significant_service_string_from_url(url, chars):
+    count = 0
+    last_period = len(url)
+    for i in range(len(url) - 1, -1, -1):
+        if url[i] == '.':
+            if count > chars:
+                return url[i + 1:last_period]
+            else:
+                count = 0
+                last_period = i
+        else:
+            count += 1
+    if count > chars:
+        return url[0:last_period]
+    else:
+        return url
+
+
 class Handler(object):
     def __init__(self, environment):
         self.environment = environment
@@ -206,10 +224,16 @@ class HTTPHandler(Handler):
 
             device.add_activity(pkg.sniff_time, pkg.length)
 
+            significant_service = get_significant_service_string_from_url(
+                pkg.http.host, 4)
+
+            device.add_visited_host(significant_service, pkg.ip.dst)
+
             service = device.stream_to_service.get(pkg.tcp.stream)
 
             if service:
                 service.add_activity(pkg.sniff_time, pkg.length)
+                service.add_visited_host(significant_service, pkg.ip.dst)
 
             if self.environment.has_temporal_stream(pkg):
 
