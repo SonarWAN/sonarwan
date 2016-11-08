@@ -34,7 +34,7 @@ def pretty_print(sonarwan):
         print('\nCharacteristics:')
         for k, v in d.characteristics.items():
             aux.append([k, v.replace("%20", " ")])
-        aux.append(['Associated services', len(d.services)])
+        aux.append(['Associated Apps', len(d.apps)])
         print(tabulate(aux))
         print('\nActivity:')
         aux = []
@@ -46,9 +46,9 @@ def pretty_print(sonarwan):
         for k, v in d.visited_hosts.items():
             aux.append([k, v])
         print(tabulate(aux))
-        for j, s in enumerate(d.services):
+        for j, s in enumerate(d.apps):
             print()
-            print("Service {}:".format(j + 1))
+            print("App {}:".format(j + 1))
             aux = []
             for k, v in s.characteristics.items():
                 aux.append([k, v.replace("%20", " ")])
