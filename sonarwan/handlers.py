@@ -202,7 +202,10 @@ class HTTPHandler(Handler):
 
         if hasattr(pkg.http, 'host'):
             name = get_significant_name_from_url(pkg.http.host)
-            service = Service.from_name(name)
+            service = self.environment.service_analyzer.find_service_from_absolute_url(
+                pkg.http.host
+            ) or self.environment.service_analyzer.find_service_from_url(
+                pkg.http.host) or Service.from_name(name)
             service.hosts.add(pkg.http.host)
             return service
         else:
