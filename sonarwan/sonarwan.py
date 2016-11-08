@@ -3,7 +3,7 @@ import time
 import json
 
 from environment import Environment
-from models import ServiceLess, DeviceLess
+from models import AppLess, DeviceLess
 
 import utils
 
@@ -70,23 +70,23 @@ class SonarwanRep(object):
     def __init__(self, sonarwan):
         self.summary = Summary(sonarwan)
 
-        self.init_devices(sonarwan.environment.devices)
-        self.init_services(sonarwan.environment.authorless_services)
+        # self.init_devices(sonarwan.environment.devices)
+        # self.init_services(sonarwan.environment.authorless_services)
 
-    def init_devices(self, devices):
-        self.devices = []
-        for each in devices:
-            services = []
-            for s in each.services:
-                services.append(ServiceLess(s.characteristics, s.activity))
-            self.devices.append(
-                DeviceLess(services, each.characteristics, each.activity))
+    # def init_devices(self, devices):
+    # self.devices = []
+    # for each in devices:
+    #     apps = []
+    #     for s in each.apps:
+    #         apps.append(AppLess(s.characteristics, s.activity))
+    #     self.devices.append(
+    #         DeviceLess(services, each.characteristics, each.activity))
 
-    def init_services(self, services):
-        self.authorless_services = []
-        for each in services:
-            self.authorless_services.append(
-                ServiceLess(each.characteristics, each.activity))
+    # def init_services(self, services):
+    # self.authorless_services = []
+    # for each in services:
+    #     self.authorless_services.append(
+    #         AppLess(each.characteristics, each.activity))
 
     def toJSON(self):
         return json.dumps(

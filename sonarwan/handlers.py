@@ -1,4 +1,4 @@
-from models import Device, DeviceLess, AuthorlessService, ServiceLess
+from models import Device, AuthorlessService
 from constants import Transport
 
 import random
@@ -108,9 +108,9 @@ class TransportHandler(Handler):
         if self.environment.has_device_from_stream(pkg):
             device = self.environment.locate_device(pkg)
             device.add_activity(time, length)
-            service = device.stream_to_service.get(stream)
-            if service:
-                service.add_activity(time, length)
+            app = device.stream_to_app.get(stream)
+            if app:
+                app.add_activity(time, length)
 
         elif self.environment.has_service_from_stream(pkg):
             service = self.environment.locate_service(pkg)
@@ -210,9 +210,9 @@ class HTTPHandler(Handler):
 
         device.add_activity(time, length)
 
-        service = device.stream_to_service.get(pkg.tcp.stream)
-        if service:
-            service.add_activity(time, length)
+        app = device.stream_to_app.get(pkg.tcp.stream)
+        if app:
+            app.add_activity(time, length)
 
     def process_new_stream(self, pkg):
         def action(device_args, app_args):
@@ -229,18 +229,18 @@ class HTTPHandler(Handler):
 
             device.add_visited_host(significant_service, pkg.ip.dst)
 
-            service = device.stream_to_service.get(pkg.tcp.stream)
+            app = device.stream_to_app.get(pkg.tcp.stream)
 
-            if service:
-                service.add_activity(pkg.sniff_time, pkg.length)
-                service.add_visited_host(significant_service, pkg.ip.dst)
+            if app:
+                app.add_activity(pkg.sniff_time, pkg.length)
+                app.add_visited_host(significant_service, pkg.ip.dst)
 
             if self.environment.has_temporal_stream(pkg):
 
                 for each in self.environment.locate_temporal(pkg):
                     device.add_activity(each[0], each[1])
-                    if service:
-                        service.add_activity(each[0], each[1])
+                    if app:
+                        app.add_activity(each[0], each[1])
 
                 del self.environment.temporal_stream_map[Transport.TCP][
                     pkg.tcp.stream]
@@ -253,8 +253,8 @@ class HTTPHandler(Handler):
                     Transport.TCP][pkg.tcp.stream]
 
                 device.merge_activity(activity_from_stream)
-                if service:
-                    service.merge_activity(activity_from_stream)
+                if app:
+                    app.merge_activity(activity_from_stream)
 
                 # Only remove current stream for service,
                 # not the whole service, as it could be consumed

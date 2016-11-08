@@ -51,14 +51,14 @@ class AuxiliaryDataManager(object):
         merge_dicts(self.activity, other_activity, sum_fn)
 
 
-class Service(AuxiliaryDataManager):
+class App(AuxiliaryDataManager):
     def __init__(self):
         self.activity = {}
         self.characteristics = {}
 
         self.visited_hosts = {}
 
-    def update_service(self, app_args):
+    def update_app(self, app_args):
         for k in app_args:
             current_value = self.characteristics.get(k)
             new_value = app_args.get(k)
@@ -66,6 +66,12 @@ class Service(AuxiliaryDataManager):
             if (not current_value) or (new_value and
                                        len(new_value) > len(current_value)):
                 self.characteristics[k] = new_value
+
+
+class Service(AuxiliaryDataManager):
+    def __init__(self):
+        self.activity = {}
+        self.characteristics = {}
 
 
 class AuthorlessService(Service):
@@ -104,10 +110,10 @@ class AuthorlessService(Service):
 
 class Device(AuxiliaryDataManager):
     def __init__(self, inference_engine):
-        self.services = []
+        self.apps = []
         self.characteristics = {}
         self.activity = {}
-        self.stream_to_service = {}
+        self.stream_to_app = {}
 
         self.visited_hosts = {}
 
@@ -122,9 +128,9 @@ class Device(AuxiliaryDataManager):
                 return -1
             score += sim
 
-        for service in self.services:
+        for app in self.apps:
             for k, v in app_args.items():
-                sim = similarity(service.characteristics, k, v)
+                sim = similarity(app.characteristics, k, v)
                 if sim != -1:
                     score += sim
 
@@ -138,18 +144,18 @@ class Device(AuxiliaryDataManager):
 
         #Service
         if app_args:
-            service = self.update_services(app_args)
-            self.stream_to_service[stream_number] = service
+            app = self.update_apps(app_args)
+            self.stream_to_app[stream_number] = app
 
-    def update_services(self, app_args):
-        services = []
+    def update_apps(self, app_args):
+        apps = []
         max_score = float('-inf')
 
-        for service in self.services:
+        for each_app in self.apps:
             score = 0
             incompatible = False
             for k, v in app_args.items():
-                sim = similarity(service.characteristics, k, v)
+                sim = similarity(each_app.characteristics, k, v)
                 if sim == -1:
                     incompatible = True
                     break
@@ -158,20 +164,20 @@ class Device(AuxiliaryDataManager):
             if not incompatible:
                 if score > 0:
                     if score == max_score:
-                        services.append(service)
+                        apps.append(each_app)
                     elif score > max_score:
-                        max_score, services = score, [service]
+                        max_score, apps = score, [each_app]
 
-        service = None
-        if services:
-            service = random.choice(services)
+        app = None
+        if apps:
+            app = random.choice(apps)
         elif app_args:
-            service = Service()
-            self.services.append(service)
+            app = App()
+            self.apps.append(app)
 
-        service.update_service(app_args)
+        app.update_app(app_args)
 
-        return service
+        return app
 
     def update_device(self, device_args):
         for k in device_args:
@@ -195,7 +201,7 @@ class DeviceLess():
         self.activity = activity
 
 
-class ServiceLess():
+class AppLess():
     def __init__(self, characteristics, activity):
         self.characteristics = characteristics
         self.activity = activity
