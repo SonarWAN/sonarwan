@@ -58,7 +58,7 @@ class Environment(object):
 
     def get_existing_authorless_service(self, name):
         for each in self.authorless_services:
-            if each.characteristics['name'] == name:
+            if each.name == name:
                 return each
         return None
 

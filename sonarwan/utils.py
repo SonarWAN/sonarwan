@@ -41,42 +41,41 @@ def pretty_print(sonarwan):
         for k, v in d.activity.items():
             aux.append([k, v])
         print(tabulate(aux))
-        print('\nVisited Hosts:')
-        aux = []
-        for k, v in d.visited_hosts.items():
-            aux.append([k, v])
-        print(tabulate(aux))
-        for j, s in enumerate(d.apps):
+        for j, a in enumerate(d.apps):
             print()
             print("App {}:".format(j + 1))
             aux = []
-            for k, v in s.characteristics.items():
+            for k, v in a.characteristics.items():
                 aux.append([k, v.replace("%20", " ")])
+            aux.append(['Associated Services', len(a.services)])
             print(tabulate(aux))
-            aux = []
-            for k, v in s.activity.items():
-                aux.append([k, v])
-            print(tabulate(aux))
-            print('\nVisited Hosts:')
-            aux = []
-            for k, v in s.visited_hosts.items():
-                aux.append([k, v])
-            print(tabulate(aux))
+
+            for x, s in enumerate(a.services):
+                aux = []
+                print("Service {}:".format(x + 1))
+                aux.append(['name', s.name])
+                aux.append(['type', s.type or 'Unknown URL'])
+                print(tabulate(aux))
+                print('\nActivity:')
+                aux = []
+                for k, v in s.activity.items():
+                    aux.append([k, v])
+                print(tabulate(aux))
         print()
-    print_title("Authorless Services")
-    for i, s in enumerate(sonarwan.environment.authorless_services):
-        print_subtitle("Service {}".format(i + 1))
-        aux = []
-        print('\nCharacteristics:')
-        for k, v in s.characteristics.items():
-            aux.append([k, v.replace("%20", " ")])
-        print(tabulate(aux))
-        print('\nActivity:')
-        aux = []
-        for k, v in s.activity.items():
-            aux.append([k, v])
-        print(tabulate(aux))
-        print()
+    # print_title("Authorless Services")
+    # for i, s in enumerate(sonarwan.environment.authorless_services):
+    #     print_subtitle("Service {}".format(i + 1))
+    #     aux = []
+    #     print('\nCharacteristics:')
+    #     for k, v in s.characteristics.items():
+    #         aux.append([k, v.replace("%20", " ")])
+    #     print(tabulate(aux))
+    #     print('\nActivity:')
+    #     aux = []
+    #     for k, v in s.activity.items():
+    #         aux.append([k, v])
+    #     print(tabulate(aux))
+    #     print()
 
 
 def print_title(string):

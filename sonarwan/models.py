@@ -51,12 +51,13 @@ class AuxiliaryDataManager(object):
         merge_dicts(self.activity, other_activity, sum_fn)
 
 
-class App(AuxiliaryDataManager):
+class App(object):
     def __init__(self):
-        self.activity = {}
-        self.characteristics = {}
 
-        self.visited_hosts = {}
+        self.characteristics = {}
+        self.services = []
+
+        self.stream_to_service = {}
 
     def update_app(self, app_args):
         for k in app_args:
@@ -67,11 +68,36 @@ class App(AuxiliaryDataManager):
                                        len(new_value) > len(current_value)):
                 self.characteristics[k] = new_value
 
+    def process_service(self, service, time, length, stream_number):
+        existing = False
+        curr_service = service
+
+        for each in self.services:
+            if each.name == service.name:
+                existing = True
+                curr_service = each
+                break
+
+        if not existing:
+            self.services.append(curr_service)
+
+        curr_service.add_activity(time, length)
+        self.stream_to_service[stream_number] = curr_service
+
 
 class Service(AuxiliaryDataManager):
     def __init__(self):
         self.activity = {}
-        self.characteristics = {}
+        self.name = None
+        self.type = None
+        self.ips = set()
+
+    @classmethod
+    def from_characteristics(cls, characteristics):
+        service = cls()
+        service.name = characteristics.get('name') or 'Unknown'
+        service.type = characteristics.get('type') or 'Unknown'
+        return service
 
 
 class AuthorlessService(Service):
@@ -113,9 +139,8 @@ class Device(AuxiliaryDataManager):
         self.apps = []
         self.characteristics = {}
         self.activity = {}
-        self.stream_to_app = {}
 
-        self.visited_hosts = {}
+        self.stream_to_app = {}
 
         self.inference_engine = inference_engine
 
@@ -193,15 +218,23 @@ class Device(AuxiliaryDataManager):
         if inferences:
             self.characteristics.update(inferences)
 
+    def get_service(self, stream_number):
+        app = self.stream_to_app.get(stream_number)
+        if not app:
+            return None
+        return app.stream_to_service[stream_number]
+
 
 class DeviceLess():
-    def __init__(self, services, characteristics, activity):
-        self.services = services
-        self.characteristics = characteristics
-        self.activity = activity
+    pass
+#     def __init__(self, services, characteristics, activity):
+#         self.services = services
+#         self.characteristics = characteristics
+#         self.activity = activity
 
 
 class AppLess():
-    def __init__(self, characteristics, activity):
-        self.characteristics = characteristics
-        self.activity = activity
+    pass
+#     def __init__(self, characteristics, activity):
+#         self.characteristics = characteristics
+#         self.activity = activity

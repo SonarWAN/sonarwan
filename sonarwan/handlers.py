@@ -1,4 +1,4 @@
-from models import Device, AuthorlessService
+from models import Device, AuthorlessService, Service
 from constants import Transport
 
 import random
@@ -44,40 +44,46 @@ def get_cipher_suite(pkg):
     return list(map(lambda x: (x.raw_value, x.showname_value), cipher_suite))
 
 
-def get_significant_service_from_url(url, chars):
-    count = 0
-    for i in range(len(url) - 1, -1, -1):
-        if url[i] == '.':
-            if count > chars:
-                return {'name': url[i + 1:]}
-            else:
-                count = 0
-        else:
-            count += 1
-    return {'name': url}
-
-
-def get_significant_service_string_from_url(url, chars):
+def get_significant_service_from_url(url):
+    chars = 3
     count = 0
     last_period = len(url)
     for i in range(len(url) - 1, -1, -1):
         if url[i] == '.':
             if count > chars:
-                return url[i + 1:last_period]
+                return {'name': url[i + 1:last_period]}
             else:
                 count = 0
                 last_period = i
         else:
             count += 1
     if count > chars:
-        return url[0:last_period]
+        return {'name': url[0:last_period]}
     else:
-        return url
+        return {'name': url}
 
 
 class Handler(object):
     def __init__(self, environment):
         self.environment = environment
+
+    def search_service(self, pkg):
+        service_characteristics = self.environment.service_analyzer.find_service_from_ip(
+            pkg.ip.dst)
+        if service_characteristics:
+            return service_characteristics
+        else:
+            host = self.environment.find_host(pkg.ip.dst)
+            if host:
+                return self.environment.service_analyzer.find_service_from_absolute_url(
+                    host
+                ) or self.environment.service_analyzer.find_service_from_url(
+                    host) or get_significant_service_from_url(host)
+            else:
+                if hasattr(pkg, 'http') and hasattr(pkg.http, 'host'):
+                    return get_significant_service_from_url(pkg.http.host)
+                else:
+                    return None
 
 
 class DNSHandler(Handler):
@@ -108,9 +114,12 @@ class TransportHandler(Handler):
         if self.environment.has_device_from_stream(pkg):
             device = self.environment.locate_device(pkg)
             device.add_activity(time, length)
+
             app = device.stream_to_app.get(stream)
             if app:
-                app.add_activity(time, length)
+                service = app.stream_to_service.get(stream)
+                if service:
+                    service.add_activity(time, length)
 
         elif self.environment.has_service_from_stream(pkg):
             service = self.environment.locate_service(pkg)
@@ -121,21 +130,6 @@ class TransportHandler(Handler):
         elif self.environment.has_temporal_stream(pkg):
             self.environment.temporal_stream_map[self.get_protocol()][
                 stream].append((time, length))
-
-    def search_service(self, pkg):
-        service_characteristics = self.environment.service_analyzer.find_service_from_ip(
-            pkg.ip.dst)
-        if service_characteristics:
-            return service_characteristics
-        else:
-            host = self.environment.find_host(pkg.ip.dst)
-            if host:
-                return self.environment.service_analyzer.find_service_from_absolute_url(
-                    host
-                ) or self.environment.service_analyzer.find_service_from_url(
-                    host) or get_significant_service_from_url(host, 4)
-            else:
-                return None
 
     def process_new_stream(self, pkg):
         service_characteristics = self.search_service(pkg)
@@ -151,8 +145,8 @@ class TransportHandler(Handler):
             service_characteristics['name'])
 
         if not service:
-            service = AuthorlessService()
-            service.characteristics = service_characteristics
+            service = AuthorlessService.from_characteristics(
+                service_characteristics)
             self.environment.authorless_services.append(service)
 
         time, length = pkg.sniff_time, pkg.length
@@ -207,12 +201,11 @@ class HTTPHandler(Handler):
             self.process_user_agent(user_agent, action)
 
         time, length = pkg.sniff_time, pkg.length
-
         device.add_activity(time, length)
 
-        app = device.stream_to_app.get(pkg.tcp.stream)
-        if app:
-            app.add_activity(time, length)
+        service = device.get_service(pkg.tcp.stream)
+        if service:
+            service.add_activity(time, length)
 
     def process_new_stream(self, pkg):
         def action(device_args, app_args):
@@ -224,23 +217,23 @@ class HTTPHandler(Handler):
 
             device.add_activity(pkg.sniff_time, pkg.length)
 
-            significant_service = get_significant_service_string_from_url(
-                pkg.http.host, 4)
-
-            device.add_visited_host(significant_service, pkg.ip.dst)
-
             app = device.stream_to_app.get(pkg.tcp.stream)
 
             if app:
-                app.add_activity(pkg.sniff_time, pkg.length)
-                app.add_visited_host(significant_service, pkg.ip.dst)
+                service_characteristics = self.search_service(pkg)
+                if service_characteristics:
+                    service = Service.from_characteristics(
+                        service_characteristics)
+                    app.process_service(service, pkg.sniff_time, pkg.length,
+                                        pkg.tcp.stream)
 
             if self.environment.has_temporal_stream(pkg):
 
                 for each in self.environment.locate_temporal(pkg):
                     device.add_activity(each[0], each[1])
-                    if app:
-                        app.add_activity(each[0], each[1])
+                    service = device.get_service(pkg.tcp.stream)
+                    if service:
+                        service.add_activity(each[0], each[1])
 
                 del self.environment.temporal_stream_map[Transport.TCP][
                     pkg.tcp.stream]
@@ -253,8 +246,9 @@ class HTTPHandler(Handler):
                     Transport.TCP][pkg.tcp.stream]
 
                 device.merge_activity(activity_from_stream)
-                if app:
-                    app.merge_activity(activity_from_stream)
+                service = device.get_service(pkg.tcp.stream)
+                if service:
+                    service.merge_activity(activity_from_stream)
 
                 # Only remove current stream for service,
                 # not the whole service, as it could be consumed
