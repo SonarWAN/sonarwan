@@ -51,31 +51,26 @@ def pretty_print(sonarwan):
             print(tabulate(aux))
 
             for x, s in enumerate(a.services):
-                aux = []
-                print("Service {}:".format(x + 1))
-                aux.append(['name', s.name])
-                aux.append(['type', s.type or 'Unknown URL'])
-                print(tabulate(aux))
-                print('\nActivity:')
-                aux = []
-                for k, v in s.activity.items():
-                    aux.append([k, v])
-                print(tabulate(aux))
+                print_service(x, s)
         print()
-    # print_title("Authorless Services")
-    # for i, s in enumerate(sonarwan.environment.authorless_services):
-    #     print_subtitle("Service {}".format(i + 1))
-    #     aux = []
-    #     print('\nCharacteristics:')
-    #     for k, v in s.characteristics.items():
-    #         aux.append([k, v.replace("%20", " ")])
-    #     print(tabulate(aux))
-    #     print('\nActivity:')
-    #     aux = []
-    #     for k, v in s.activity.items():
-    #         aux.append([k, v])
-    #     print(tabulate(aux))
-    #     print()
+    print_title("Authorless Services")
+    for i, s in enumerate(sonarwan.environment.authorless_services):
+        print_service(i, s)
+
+
+def print_service(number, service):
+    aux = []
+    print("Service {}:".format(number + 1))
+    aux.append(['name', service.name])
+    aux.append(['type', service.type or 'Unknown URL'])
+    aux.append(['ips', service.ips])
+    aux.append(['hosts', service.hosts])
+    print(tabulate(aux))
+    print('\nActivity:')
+    aux = []
+    for k, v in service.activity.items():
+        aux.append([k, v])
+    print(tabulate(aux))
 
 
 def print_title(string):

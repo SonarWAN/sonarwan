@@ -11,6 +11,8 @@ from ua_parser import user_agent_parser
 
 from tools.mobile_detector import MobileDetector
 
+from models import Service
+
 
 class InferenceEngine(object):
     def __init__(self, user_inference_directory):
@@ -290,7 +292,7 @@ class ServiceAnalyzer(object):
     def _generic_find(self, parameter, function):
         name = function(parameter)
         if name:
-            return self.service_info_map[name]
+            return Service.from_characteristics(self.service_info_map[name])
         return None
 
 

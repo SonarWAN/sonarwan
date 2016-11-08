@@ -54,7 +54,16 @@ class Environment(object):
                 self.udp_handler.process(pkg)
 
     def find_host(self, address):
-        return self.address_host.get(address)
+        ret = self.address_host.get(address)
+        if ret == None or len(ret) > 1:
+            return None
+        return ret[0]
+
+    def already_exists_authorless_service(self, name):
+        for each in self.authorless_services:
+            if each.name == name:
+                return True
+        return False
 
     def get_existing_authorless_service(self, name):
         for each in self.authorless_services:

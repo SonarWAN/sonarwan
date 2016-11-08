@@ -4,6 +4,8 @@ from constants import Transport
 import random
 import streams
 
+import ipaddress
+
 
 def is_dns_response(pkg):
     return hasattr(pkg.dns, 'a')
@@ -44,23 +46,23 @@ def get_cipher_suite(pkg):
     return list(map(lambda x: (x.raw_value, x.showname_value), cipher_suite))
 
 
-def get_significant_service_from_url(url):
+def get_significant_name_from_url(url):
     chars = 3
     count = 0
     last_period = len(url)
     for i in range(len(url) - 1, -1, -1):
         if url[i] == '.':
             if count > chars:
-                return {'name': url[i + 1:last_period]}
+                return url[i + 1:last_period]
             else:
                 count = 0
                 last_period = i
         else:
             count += 1
     if count > chars:
-        return {'name': url[0:last_period]}
+        return url[0:last_period]
     else:
-        return {'name': url}
+        return url
 
 
 class Handler(object):
@@ -68,22 +70,24 @@ class Handler(object):
         self.environment = environment
 
     def search_service(self, pkg):
-        service_characteristics = self.environment.service_analyzer.find_service_from_ip(
+        service = self.environment.service_analyzer.find_service_from_ip(
             pkg.ip.dst)
-        if service_characteristics:
-            return service_characteristics
+        if service:
+            service.ips.add(pkg.ip.dst)
+            return service
         else:
             host = self.environment.find_host(pkg.ip.dst)
             if host:
-                return self.environment.service_analyzer.find_service_from_absolute_url(
+                name = get_significant_name_from_url(host)
+                ret_service = self.environment.service_analyzer.find_service_from_absolute_url(
                     host
                 ) or self.environment.service_analyzer.find_service_from_url(
-                    host) or get_significant_service_from_url(host)
+                    host) or Service.from_name(name)
+
+                ret_service.hosts.add(host)
+                return ret_service
             else:
-                if hasattr(pkg, 'http') and hasattr(pkg.http, 'host'):
-                    return get_significant_service_from_url(pkg.http.host)
-                else:
-                    return None
+                return None
 
 
 class DNSHandler(Handler):
@@ -91,7 +95,9 @@ class DNSHandler(Handler):
         if self.needs_processing(pkg):
             answers = get_dns_answers(pkg)
             for each in answers:
-                self.environment.address_host[each] = pkg.dns.qry_name
+                if each not in self.environment.address_host:
+                    self.environment.address_host[each] = []
+                self.environment.address_host[each].append(pkg.dns.qry_name)
 
     def needs_processing(self, pkg):
         return is_dns_response(pkg)
@@ -115,11 +121,9 @@ class TransportHandler(Handler):
             device = self.environment.locate_device(pkg)
             device.add_activity(time, length)
 
-            app = device.stream_to_app.get(stream)
-            if app:
-                service = app.stream_to_service.get(stream)
-                if service:
-                    service.add_activity(time, length)
+            service = device.get_service_from_stream(stream)
+            if service:
+                service.add_activity(time, length)
 
         elif self.environment.has_service_from_stream(pkg):
             service = self.environment.locate_service(pkg)
@@ -132,21 +136,27 @@ class TransportHandler(Handler):
                 stream].append((time, length))
 
     def process_new_stream(self, pkg):
-        service_characteristics = self.search_service(pkg)
+        service = self.search_service(pkg)
 
-        if service_characteristics:
-            self.process_new_detected_service(service_characteristics, pkg)
+        if service:
+            self.process_new_detected_service(service, pkg)
         else:
             self.environment.temporal_stream_map[self.get_protocol()][
                 self.get_stream(pkg)] = [(pkg.sniff_time, pkg.length)]
 
-    def process_new_detected_service(self, service_characteristics, pkg):
-        service = self.environment.get_existing_authorless_service(
-            service_characteristics['name'])
+    def process_new_detected_service(self, candidate_service, pkg):
+        name = candidate_service.name
 
-        if not service:
-            service = AuthorlessService.from_characteristics(
-                service_characteristics)
+        if self.environment.already_exists_authorless_service(name):
+            service = self.environment.get_existing_authorless_service(name)
+            service.hosts.update(candidate_service.hosts)
+            service.ips.update(candidate_service.ips)
+        else:
+            service = AuthorlessService.from_service(candidate_service)
+
+            # If found service by name and not by IP
+            if not ipaddress.ip_address(pkg.ip.dst).is_private:
+                service.ips.add(pkg.ip.dst)
             self.environment.authorless_services.append(service)
 
         time, length = pkg.sniff_time, pkg.length
@@ -182,8 +192,23 @@ class TCPHandler(TransportHandler):
 
 
 class HTTPHandler(Handler):
-    def process(self, pkg):
+    def search_service(self, pkg):
+        service = super().search_service(pkg)
+        # if pkg.http.host == 'i0.wp.com' or pkg.http.host == 'i1.wp.com':
+        #     import ipdb; ipdb.set_trace()
 
+        if service:
+            return service
+
+        if hasattr(pkg.http, 'host'):
+            name = get_significant_name_from_url(pkg.http.host)
+            service = Service.from_name(name)
+            service.hosts.add(pkg.http.host)
+            return service
+        else:
+            return None
+
+    def process(self, pkg):
         if self.environment.has_device_from_stream(pkg):
 
             device = self.environment.locate_device(pkg)
@@ -203,9 +228,43 @@ class HTTPHandler(Handler):
         time, length = pkg.sniff_time, pkg.length
         device.add_activity(time, length)
 
-        service = device.get_service(pkg.tcp.stream)
+        service = device.get_service_from_stream(pkg.tcp.stream)
         if service:
             service.add_activity(time, length)
+
+    def merge_temporal_stream(self, device, pkg):
+        for each in self.environment.locate_temporal(pkg):
+            device.add_activity(each[0], each[1])
+            service = device.get_service_from_stream(pkg.tcp.stream)
+            if service:
+                service.add_activity(each[0], each[1])
+
+        del self.environment.temporal_stream_map[Transport.TCP][pkg.tcp.stream]
+
+    def merge_authorless_service(self, device, pkg):
+        existing_service = self.environment.locate_service(pkg)
+
+        activity_from_stream = existing_service.activity_per_stream[
+            Transport.TCP][pkg.tcp.stream]
+
+        device.merge_activity(activity_from_stream)
+        service = device.get_service_from_stream(pkg.tcp.stream)
+        if service:
+            service.merge_activity(activity_from_stream)
+
+        # Only remove current stream for service,
+        # not the whole service, as it could be consumed
+        # by other devices also (think WhatsApp)
+
+        existing_service.remove_activity_from_stream(Transport.TCP,
+                                                     pkg.tcp.stream)
+
+        del self.environment.service_stream_map[Transport.TCP][pkg.tcp.stream]
+
+        # Only remove authorless Service
+        # if no streams are left associated with it
+        if existing_service.is_empty():
+            self.environment.authorless_services.remove(existing_service)
 
     def process_new_stream(self, pkg):
         def action(device_args, app_args):
@@ -220,51 +279,19 @@ class HTTPHandler(Handler):
             app = device.stream_to_app.get(pkg.tcp.stream)
 
             if app:
-                service_characteristics = self.search_service(pkg)
-                if service_characteristics:
-                    service = Service.from_characteristics(
-                        service_characteristics)
-                    app.process_service(service, pkg.sniff_time, pkg.length,
-                                        pkg.tcp.stream)
+                service = self.search_service(pkg)
+                if service:
+                    incorporated_service = app.proccess_service_from_new_stream(
+                        service, pkg.sniff_time, pkg.length, pkg.tcp.stream)
+
+                    incorporated_service.ips.add(pkg.ip.dst)
+                    incorporated_service.hosts.add(pkg.http.host)
 
             if self.environment.has_temporal_stream(pkg):
-
-                for each in self.environment.locate_temporal(pkg):
-                    device.add_activity(each[0], each[1])
-                    service = device.get_service(pkg.tcp.stream)
-                    if service:
-                        service.add_activity(each[0], each[1])
-
-                del self.environment.temporal_stream_map[Transport.TCP][
-                    pkg.tcp.stream]
+                self.merge_temporal_stream(device, pkg)
 
             if self.environment.has_service_from_stream(pkg):
-
-                existing_service = self.environment.locate_service(pkg)
-
-                activity_from_stream = existing_service.activity_per_stream[
-                    Transport.TCP][pkg.tcp.stream]
-
-                device.merge_activity(activity_from_stream)
-                service = device.get_service(pkg.tcp.stream)
-                if service:
-                    service.merge_activity(activity_from_stream)
-
-                # Only remove current stream for service,
-                # not the whole service, as it could be consumed
-                # by other devices also (think WhatsApp)
-
-                existing_service.remove_activity_from_stream(Transport.TCP,
-                                                             pkg.tcp.stream)
-
-                del self.environment.service_stream_map[Transport.TCP][
-                    pkg.tcp.stream]
-
-                # Only remove authorless Service
-                # if no streams are left associated with it
-                if existing_service.is_empty():
-                    self.environment.authorless_services.remove(
-                        existing_service)
+                self.merge_authorless_service(device, pkg)
 
         if is_request(pkg) and hasattr(pkg.http, 'user_agent'):
             user_agent = pkg.http.user_agent

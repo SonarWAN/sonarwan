@@ -33,16 +33,11 @@ def similarity(base, k, v):
     return 0
 
 
-class AuxiliaryDataManager(object):
+class ActivityDataManager(object):
     def add_activity(self, time, bytes_count):
         time_string = time.strftime('%D %H:%M:%S')
         self.activity[time_string] = self.activity.get(time_string,
                                                        0) + int(bytes_count)
-
-    def add_visited_host(self, host, ip):
-        if host not in self.visited_hosts:
-            self.visited_hosts[host] = set()
-        self.visited_hosts[host].add(ip)
 
     def merge_activity(self, other_activity):
         def sum_fn(v1, v2):
@@ -68,7 +63,8 @@ class App(object):
                                        len(new_value) > len(current_value)):
                 self.characteristics[k] = new_value
 
-    def process_service(self, service, time, length, stream_number):
+    def proccess_service_from_new_stream(self, service, time, length,
+                                         stream_number):
         existing = False
         curr_service = service
 
@@ -84,19 +80,39 @@ class App(object):
         curr_service.add_activity(time, length)
         self.stream_to_service[stream_number] = curr_service
 
+        return curr_service
 
-class Service(AuxiliaryDataManager):
+
+class Service(ActivityDataManager):
     def __init__(self):
         self.activity = {}
         self.name = None
         self.type = None
         self.ips = set()
+        self.hosts = set()
 
     @classmethod
     def from_characteristics(cls, characteristics):
         service = cls()
         service.name = characteristics.get('name') or 'Unknown'
         service.type = characteristics.get('type') or 'Unknown'
+        return service
+
+    @classmethod
+    def from_service(cls, p_service):
+        service = cls()
+        service.name = p_service.name
+        service.type = p_service.type
+        service.activity = p_service.activity
+        service.ips = p_service.ips
+        service.hosts = p_service.hosts
+        return service
+
+    @classmethod
+    def from_name(cls, name):
+        service = cls()
+        service.name = name
+        service.type = 'Generic'
         return service
 
 
@@ -134,7 +150,7 @@ class AuthorlessService(Service):
                 Transport.UDP] == {}
 
 
-class Device(AuxiliaryDataManager):
+class Device(ActivityDataManager):
     def __init__(self, inference_engine):
         self.apps = []
         self.characteristics = {}
@@ -218,7 +234,7 @@ class Device(AuxiliaryDataManager):
         if inferences:
             self.characteristics.update(inferences)
 
-    def get_service(self, stream_number):
+    def get_service_from_stream(self, stream_number):
         app = self.stream_to_app.get(stream_number)
         if not app:
             return None
