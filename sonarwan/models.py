@@ -33,22 +33,7 @@ def similarity(base, k, v):
     return 0
 
 
-class Service(object):
-    def __init__(self):
-        self.activity = {}
-        self.characteristics = {}
-
-        self.visited_hosts = {}
-
-    def update_service(self, app_args):
-        for k in app_args:
-            current_value = self.characteristics.get(k)
-            new_value = app_args.get(k)
-
-            if (not current_value) or (new_value and
-                                       len(new_value) > len(current_value)):
-                self.characteristics[k] = new_value
-
+class AuxiliaryDataManager(object):
     def add_activity(self, time, bytes_count):
         time_string = time.strftime('%D %H:%M:%S')
         self.activity[time_string] = self.activity.get(time_string,
@@ -64,6 +49,23 @@ class Service(object):
             return v1 + v2
 
         merge_dicts(self.activity, other_activity, sum_fn)
+
+
+class Service(AuxiliaryDataManager):
+    def __init__(self):
+        self.activity = {}
+        self.characteristics = {}
+
+        self.visited_hosts = {}
+
+    def update_service(self, app_args):
+        for k in app_args:
+            current_value = self.characteristics.get(k)
+            new_value = app_args.get(k)
+
+            if (not current_value) or (new_value and
+                                       len(new_value) > len(current_value)):
+                self.characteristics[k] = new_value
 
 
 class AuthorlessService(Service):
@@ -100,7 +102,7 @@ class AuthorlessService(Service):
                 Transport.UDP] == {}
 
 
-class Device(object):
+class Device(AuxiliaryDataManager):
     def __init__(self, inference_engine):
         self.services = []
         self.characteristics = {}
@@ -110,22 +112,6 @@ class Device(object):
         self.visited_hosts = {}
 
         self.inference_engine = inference_engine
-
-    def add_activity(self, time, bytes_count):
-        time_string = time.strftime('%D %H:%M:%S')
-        self.activity[time_string] = self.activity.get(time_string,
-                                                       0) + int(bytes_count)
-
-    def add_visited_host(self, host, ip):
-        if host not in self.visited_hosts:
-            self.visited_hosts[host] = set()
-        self.visited_hosts[host].add(ip)
-
-    def merge_activity(self, other_activity):
-        def sum_fn(v1, v2):
-            return v1 + v2
-
-        merge_dicts(self.activity, other_activity, sum_fn)
 
     def match_score(self, device_args, app_args):
         score = 0
