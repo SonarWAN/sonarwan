@@ -17,7 +17,7 @@ def inform_json_progress(number, path):
 
 def pretty_print(sonarwan):
     print()
-    print_title("Summary")
+    print_title("SUMMARY")
     print(
         "SonarWAN found {} devices and {} authorless services in {} capture files.".
         format(
@@ -26,36 +26,42 @@ def pretty_print(sonarwan):
             sonarwan.file_count))
     print("{} packets were analyzed.".format(sonarwan.i))
     print("Execution time: {}".format((time.time() - sonarwan.start_time)))
-    print_title("Details")
+    print_title("DETAILS")
     print_title("Devices")
     for i, d in enumerate(sonarwan.environment.devices):
-        print_subtitle("Device {}".format(i + 1))
-        aux = []
-        print('\nCharacteristics:')
-        for k, v in d.characteristics.items():
-            aux.append([k, v.replace("%20", " ")])
-        aux.append(['Associated Apps', len(d.apps)])
-        print(tabulate(aux))
-        print('\nActivity:')
-        aux = []
-        for k, v in d.activity.items():
-            aux.append([k, v])
-        print(tabulate(aux))
-        for j, a in enumerate(d.apps):
-            print()
-            print("App {}:".format(j + 1))
-            aux = []
-            for k, v in a.characteristics.items():
-                aux.append([k, v.replace("%20", " ")])
-            aux.append(['Associated Services', len(a.services)])
-            print(tabulate(aux))
-
-            for x, s in enumerate(a.services):
-                print_service(x, s)
+        print_device(i, d)
         print()
     print_title("Authorless Services")
     for i, s in enumerate(sonarwan.environment.authorless_services):
         print_service(i, s)
+        print()
+
+
+def print_device(number, device):
+    print_subtitle("Device {}".format(number + 1))
+    aux = []
+    print('\nCharacteristics:')
+    for k, v in device.characteristics.items():
+        aux.append([k, v.replace("%20", " ")])
+    aux.append(['Associated Apps', len(device.apps)])
+    print(tabulate(aux))
+    # print('\nActivity:')
+    # aux = []
+    # for k, v in d.activity.items():
+    #     aux.append([k, v])
+    # print(tabulate(aux))
+    for j, a in enumerate(device.apps):
+        print()
+        print("App {}:".format(j + 1))
+        aux = []
+        for k, v in a.characteristics.items():
+            aux.append([k, v.replace("%20", " ")])
+        aux.append(['Associated Services', len(a.services)])
+        print(tabulate(aux))
+        print()
+        for x, s in enumerate(a.services):
+            print_service(x, s)
+            print()
 
 
 def print_service(number, service):
@@ -63,8 +69,10 @@ def print_service(number, service):
     print("Service {}:".format(number + 1))
     aux.append(['name', service.name])
     aux.append(['type', service.type or 'Unknown URL'])
-    aux.append(['ips', service.ips])
-    aux.append(['hosts', service.hosts])
+    if len(service.ips) > 0:
+        aux.append(['ips', service.ips])
+    if len(service.hosts) > 0:
+        aux.append(['hosts', service.hosts])
     print(tabulate(aux))
     print('\nActivity:')
     aux = []

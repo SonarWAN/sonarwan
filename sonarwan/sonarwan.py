@@ -3,7 +3,7 @@ import time
 import json
 
 from environment import Environment
-from models import AppLess, DeviceLess
+from models import AppLess, DeviceLess, ServiceLess
 
 import utils
 
@@ -70,23 +70,31 @@ class SonarwanRep(object):
     def __init__(self, sonarwan):
         self.summary = Summary(sonarwan)
 
-        # self.init_devices(sonarwan.environment.devices)
-        # self.init_services(sonarwan.environment.authorless_services)
+        self.init_devices(sonarwan.environment.devices)
+        self.init_services(sonarwan.environment.authorless_services)
 
-    # def init_devices(self, devices):
-    # self.devices = []
-    # for each in devices:
-    #     apps = []
-    #     for s in each.apps:
-    #         apps.append(AppLess(s.characteristics, s.activity))
-    #     self.devices.append(
-    #         DeviceLess(services, each.characteristics, each.activity))
+    def init_devices(self, devices):
+        self.devices = []
+        for each in devices:
+            apps = []
+            for each_app in each.apps:
+                services = []
+                for each_service in each_app.services:
+                    services.append(
+                        ServiceLess(each_service.activity, each_service.name,
+                                    each_service.type, each_service.ips,
+                                    each_service.hosts))
+                apps.append(AppLess(each_app.characteristics, services))
 
-    # def init_services(self, services):
-    # self.authorless_services = []
-    # for each in services:
-    #     self.authorless_services.append(
-    #         AppLess(each.characteristics, each.activity))
+            self.devices.append(
+                DeviceLess(apps, each.characteristics, each.activity))
+
+    def init_services(self, services):
+        self.authorless_services = []
+        for each in services:
+            self.authorless_services.append(
+                ServiceLess(each.activity, each.name, each.type, each.ips,
+                            each.hosts))
 
     def toJSON(self):
         return json.dumps(

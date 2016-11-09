@@ -242,15 +242,22 @@ class Device(ActivityDataManager):
 
 
 class DeviceLess():
-    pass
-#     def __init__(self, services, characteristics, activity):
-#         self.services = services
-#         self.characteristics = characteristics
-#         self.activity = activity
+    def __init__(self, apps, characteristics, activity):
+        self.apps = apps
+        self.characteristics = characteristics
+        self.activity = activity
 
 
 class AppLess():
-    pass
-#     def __init__(self, characteristics, activity):
-#         self.characteristics = characteristics
-#         self.activity = activity
+    def __init__(self, characteristics, services):
+        self.characteristics = characteristics
+        self.services = services
+
+
+class ServiceLess():
+    def __init__(self, activity, name, type_param, ips, hosts):
+        self.activity = activity
+        self.name = name
+        self.type = type_param
+        self.ips = list(ips)
+        self.hosts = list(hosts)
