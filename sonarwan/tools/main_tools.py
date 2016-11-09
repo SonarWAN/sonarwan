@@ -180,7 +180,19 @@ class ComplementaryUAAnalyzers(object):
 class UserAgentAnalyzer(object):
     def __init__(self, user_patterns_file):
         self.load_pattern_files(user_patterns_file)
+        self.load_linux_distributions_file()
         self.complement = ComplementaryUAAnalyzers()
+
+    def load_linux_distributions_file(self):
+        self.linux_distributions = []
+        try:
+            with open(paths.LINUX_DISTRIBUTION_FILE) as f:
+                for each in f.read().splitlines():
+                    if each and each[0] != '#':
+                        self.linux_distributions.append(each.lower())
+
+        except:
+            print('Invalid linux distributions file')
 
     def load_pattern_files(self, user_patterns_file):
         self.user_agents = []
@@ -220,6 +232,10 @@ class UserAgentAnalyzer(object):
                         device_args[k[4:]] = best_match[k]
 
         self.complement.get_additional_data(user_agent, device_args, app_args)
+
+        if device_args['os_family'].lower() in self.linux_distributions:
+            device_args['os_distribution'] = device_args['os_family']
+            device_args['os_family'] = 'Linux'
 
         return {'device_args': device_args, 'app_args': app_args}
 

@@ -4,3 +4,5 @@ INFERENCE_DIR = './db/inference/'
 MOBILE_DETECTOR_PATH = './db/serbanghita-Mobile-Detect-db.json'
 
 SERVICES_DIRECTORY_PATH = './db/services/'
+
+LINUX_DISTRIBUTION_FILE = './db/linux.distributions'
