@@ -233,7 +233,8 @@ class UserAgentAnalyzer(object):
 
         self.complement.get_additional_data(user_agent, device_args, app_args)
 
-        if device_args['os_family'].lower() in self.linux_distributions:
+        if device_args.get('os_family') and device_args['os_family'].lower(
+        ) in self.linux_distributions:
             device_args['os_distribution'] = device_args['os_family']
             device_args['os_family'] = 'Linux'
 
