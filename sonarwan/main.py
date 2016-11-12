@@ -9,10 +9,7 @@ def main():
                           args.services, args.progress)
 
     sonarwan = SonarWan(arguments)
-
-    for each in args.files:
-        sonarwan.analyze(each)
-
+    sonarwan.run(args.files)
     sonarwan.print_info()
 
 

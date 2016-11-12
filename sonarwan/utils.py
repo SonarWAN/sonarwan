@@ -4,8 +4,11 @@ from tabulate import tabulate
 import datetime
 import json
 
+FRAMES_TO_INFORM = 10
+
 
 def show_progress(pkg_index):
+    # Write on error so that user can redirect stdout
     sys.stderr.write('\rProcessed packets {}'.format(pkg_index))
     sys.stdout.flush()
 
@@ -45,11 +48,6 @@ def print_device(number, device):
         aux.append([k, v.replace("%20", " ")])
     aux.append(['Associated Apps', len(device.apps)])
     print(tabulate(aux))
-    # print('\nActivity:')
-    # aux = []
-    # for k, v in d.activity.items():
-    #     aux.append([k, v])
-    # print(tabulate(aux))
     for j, a in enumerate(device.apps):
         print()
         print("App {}:".format(j + 1))
@@ -82,6 +80,12 @@ def print_service(number, service):
 
 
 def print_title(string):
+    """Prints like 
+
+        *****
+        Title
+        *****
+    """
     aux = '*' * len(string)
     print("\n{}".format(aux))
     print(string)
@@ -89,6 +93,11 @@ def print_title(string):
 
 
 def print_subtitle(string):
+    """Prints like 
+
+        Subtitle
+        =======
+    """
     aux = '=' * len(string)
     print(string)
     print("{}".format(aux))

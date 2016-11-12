@@ -5,6 +5,7 @@ class Arguments(object):
     def __init__(self, json_output, user_patterns_file,
                  user_inference_directory, user_services_directory,
                  progress_output):
+
         self.json_output = json_output
         self.progress_output = progress_output
         self.user_patterns_file = user_patterns_file
@@ -14,6 +15,11 @@ class Arguments(object):
         self.add_final_character()
 
     def add_final_character(self):
+        """ 
+        In case user input for directory does not contain '/' at the
+        end, it is added.
+        """
+
         if self.user_inference_directory and self.user_inference_directory[
                 -1] != '/':
             self.user_inference_directory = user_inference_directory + '/'
@@ -23,6 +29,7 @@ class Arguments(object):
             self.user_services_directory = self.user_services_directory + '/'
 
     def create_parser():
+
         parser = argparse.ArgumentParser(
             description="Recognize devices of a private network by sniffing NAT'd traffic",
             epilog="For suggestions or bug report, go to https://github.com/sonarwan/sonarwan-core"

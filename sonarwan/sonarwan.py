@@ -27,24 +27,35 @@ class SonarWan(object):
         self.environment = Environment(ua_analyzer, inference_engine,
                                        service_analyzer)
 
-        self.i = 0
+    def show_progress(self):
+        if not self.arguments.json_output:
+            utils.show_progress(self.i)
 
+        elif self.arguments.progress_output and self.i % utils.FRAMES_TO_INFORM == 0:
+            utils.inform_json_progress(self.i, path)
+
+    def run(self, files):
         self.start_time = time.time()
+        self.i = 0
         self.file_count = 0
+
+        for each in files:
+            self.file_count += 1
+            self.analyze(each)
+
+        self.total_time = time.time() - self.start_time
 
     def analyze(self, path):
         cap = pyshark.FileCapture(path)
-        self.environment.prepare()
-        self.file_count += 1
 
-        FRAMES_TO_INFORM = 10
+        # Should prepare environment first to remove all maps, 
+        # as the stream numbers will be repeated between files
+        self.environment.prepare()
 
         for pkg in cap:
             self.i += 1
-            if not self.arguments.json_output:
-                utils.show_progress(self.i)
-            elif self.arguments.progress_output and self.i % FRAMES_TO_INFORM == 0:
-                utils.inform_json_progress(self.i, path)
+
+            self.show_progress()
             self.environment.update(pkg)
 
     def print_info(self):
@@ -61,8 +72,7 @@ class Summary(object):
         self.authorless_services = len(
             sonarwan.environment.authorless_services)
         self.packets = sonarwan.i
-        self.execution_time = int(
-            (time.time() - sonarwan.start_time) * 100) / 100
+        self.execution_time = int(sonarwan.total_time * 100) / 100
         self.files = sonarwan.file_count
 
 
@@ -74,6 +84,8 @@ class SonarwanRep(object):
         self.init_services(sonarwan.environment.authorless_services)
 
     def init_devices(self, devices):
+        """Generates device list with only neccessary info for JSON output"""
+
         self.devices = []
         for each in devices:
             apps = []
@@ -90,6 +102,8 @@ class SonarwanRep(object):
                 DeviceLess(apps, each.characteristics, each.activity))
 
     def init_services(self, services):
+        """Generates authorless service list with only neccessary info for JSON output"""
+
         self.authorless_services = []
         for each in services:
             self.authorless_services.append(
@@ -97,6 +111,10 @@ class SonarwanRep(object):
                             each.hosts))
 
     def toJSON(self):
+        """
+        This will go recursively inside summary (Summary), devices (DeviceLess) and 
+        authorless services (ServiceLess) and will return an appropiate JSON representation.
+        """
         return json.dumps(
             {
                 'Report': self
