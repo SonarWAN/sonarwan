@@ -6,6 +6,8 @@ import handlers
 
 
 class Environment(object):
+    """The Environment keeps track of Devices and Authorless Services"""
+
     def __init__(self, ua_analyzer, inference_engine, service_analyzer):
 
         self.devices = []
@@ -21,9 +23,12 @@ class Environment(object):
 
         self.service_analyzer = service_analyzer
 
+        # Cache for DNS queries
         self.address_host = {}
 
     def prepare(self):
+        """Resets all stream maps when new file is going to be proccesed"""
+
         self.device_stream_map = {
             Transport.TCP: {},
             Transport.UDP: {},
@@ -38,6 +43,8 @@ class Environment(object):
         }
 
     def update(self, pkg):
+        """A handler will proccess the package based on type of package"""
+
         if hasattr(pkg, 'ip'):
             layers = [each.layer_name for each in pkg.layers]
 
@@ -54,6 +61,11 @@ class Environment(object):
                 self.udp_handler.process(pkg)
 
     def find_host(self, address):
+        """Returns host if the IP address was answer from a DNS query.
+        
+        If that IP was answer for many url queries, method return None to avoid
+        incorrect behaviour when name of url is url itself (for example x1.wp.com)
+        """
         ret = self.address_host.get(address)
         if ret == None or len(ret) > 1:
             return None
@@ -72,6 +84,8 @@ class Environment(object):
         return None
 
     def previously_analized_stream(self, pkg):
+        """True if corresponds to device, to authorless_service or to temporal"""
+
         return self.has_device_from_stream(
             pkg) or self.has_service_from_stream(
                 pkg) or self.has_temporal_stream(pkg)

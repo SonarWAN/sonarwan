@@ -116,6 +116,8 @@ class Service(ActivityDataManager):
     A Service will be:
         - Auhorless Service: if the App that triggered it was not detected
         - App Consumed Service: if the App that consumed it was detected (also the device is detected)
+        
+    Services are the same if they have same name
     """
 
     def __init__(self):
