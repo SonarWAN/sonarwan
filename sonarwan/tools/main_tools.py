@@ -1,4 +1,5 @@
 import paths
+import errors
 import re
 import csv
 import ipaddress
@@ -34,9 +35,12 @@ class InferenceEngine(object):
                 with open(each) as f:
                     csvreader = csv.DictReader(f, delimiter=";")
                     self.inference_list.extend(list(csvreader))
-        except:
-            print('Invalid inference directory or file format')
-            raise
+
+        except FileNotFoundError:
+            raise errors.InferenceDirectoryNotFoundError()
+
+        except Exception:
+            raise errors.InvalidCSVInferenceFile()
 
     def analyze_inference(self, characteristics):
         candidates = [
@@ -192,7 +196,7 @@ class UserAgentAnalyzer(object):
                         self.linux_distributions.append(each.lower())
 
         except:
-            print('Invalid linux distributions file')
+            raise errors.LinuxDistributionListError()
 
     def load_pattern_files(self, user_patterns_file):
         self.user_agents = []
@@ -209,7 +213,7 @@ class UserAgentAnalyzer(object):
                         self.user_agents.append(each)
 
         except:
-            print('Invalid pattern file')
+            raise errors.PatternFileNotFileError()
 
     def get_best_match(self, user_agent):
         max_size = -1
@@ -254,28 +258,31 @@ class ServiceAnalyzer(object):
         if user_services_directory:
             self.load_files(user_services_directory)
 
-    def load_service(self, content):
+    def load_service(self, content, full_path):
+        try:
+            name = content['name']
 
-        name = content['name']
+            self.service_info_map[name] = {
+                k: v
+                for k, v in content.items()
+                if k not in ['urls', 'ips', 'absolute-urls']
+            }
 
-        self.service_info_map[name] = {
-            k: v
-            for k, v in content.items()
-            if k not in ['urls', 'ips', 'absolute-urls']
-        }
+            if content.get('absolute-urls'):
+                self.url_analyzer.absolute_service_map[name] = set(content[
+                    'absolute-urls'])
 
-        if content.get('absolute-urls'):
-            self.url_analyzer.absolute_service_map[name] = set(content[
-                'absolute-urls'])
+            if content.get('urls'):
+                self.url_analyzer.service_map[name] = set(content['urls'])
 
-        if content.get('urls'):
-            self.url_analyzer.service_map[name] = set(content['urls'])
+            if content.get('ips'):
+                self.ip_analyzer.service_map[name] = set()
+                for each in content['ips']:
+                    self.ip_analyzer.service_map[name].add(
+                        ipaddress.ip_network(each))
 
-        if content.get('ips'):
-            self.ip_analyzer.service_map[name] = set()
-            for each in content['ips']:
-                self.ip_analyzer.service_map[name].add(
-                    ipaddress.ip_network(each))
+        except TypeError:
+            raise errors.InvalidYAMLServiceFile(full_path)
 
     def load_files(self, path):
         try:
@@ -289,11 +296,15 @@ class ServiceAnalyzer(object):
 
                 if type(content) is list:
                     for each in content:
-                        self.load_service(each)
+                        self.load_service(each, full_path)
                 else:
-                    self.load_service(content)
-        except:
-            print('Invalid directory or file format')
+                    self.load_service(content, full_path)
+
+        except FileNotFoundError:
+            raise errors.ServiceDirectoryNotFoundError()
+        except errors.InvalidYAMLServiceFile:
+            raise
+        except Exception:
             raise
 
     def find_service_from_ip(self, ipaddr):
@@ -375,11 +386,3 @@ class IPAnalyzer(object):
 
             self.not_found_cache.add(ipaddr)
             return None
-
-
-if __name__ == '__main__':
-    ie = InferenceEngine()
-    c = {'cfnetwork_version': '711.0.6', 'darwin_version': '14.0.0'}
-    # {'build': '12A365', 'os_version': '8.0', 'darwin_version': '14.0.0', 'model': 'iPad4,4', 'cfnetwork_version': '711.0.6', 'framework': 'GameKit-194.14'}
-    ret = ie.analyze_inference(c)
-    print(ret)

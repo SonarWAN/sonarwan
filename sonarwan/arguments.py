@@ -23,7 +23,7 @@ class Arguments(object):
 
         if self.user_inference_directory and self.user_inference_directory[
                 -1] != '/':
-            self.user_inference_directory = user_inference_directory + '/'
+            self.user_inference_directory = self.user_inference_directory + '/'
 
         if self.user_services_directory and self.user_services_directory[
                 -1] != '/':

@@ -14,6 +14,13 @@ def show_progress(pkg_index):
     sys.stdout.flush()
 
 
+def report_error(msg, json_output):
+    if json_output:
+        print(json.dumps({'Error': msg}))
+    else:
+        print("ERROR: {}".format(msg))
+
+
 def inform_json_progress(number, path):
     update = {'Packets': number, 'Current File': path}
     print(json.dumps({'Update': update}))

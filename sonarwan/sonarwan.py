@@ -1,11 +1,13 @@
 import pyshark
 import time
 import json
+import sys
 
 from environment import Environment
 from models import AppLess, DeviceLess, ServiceLess
 
 import utils
+import errors
 
 from tools import main_tools
 
@@ -15,14 +17,44 @@ class SonarWan(object):
 
         self.arguments = arguments
 
-        ua_analyzer = main_tools.UserAgentAnalyzer(
-            self.arguments.user_patterns_file)
+        try:
+            ua_analyzer = main_tools.UserAgentAnalyzer(
+                self.arguments.user_patterns_file)
 
-        inference_engine = main_tools.InferenceEngine(
-            self.arguments.user_inference_directory)
+            inference_engine = main_tools.InferenceEngine(
+                self.arguments.user_inference_directory)
 
-        service_analyzer = main_tools.ServiceAnalyzer(
-            self.arguments.user_services_directory)
+            service_analyzer = main_tools.ServiceAnalyzer(
+                self.arguments.user_services_directory)
+
+        except errors.ServiceDirectoryNotFoundError:
+            utils.report_error(
+                "--service option passed is not valid directory",
+                self.arguments.json_output)
+            sys.exit(1)
+        except errors.InferenceDirectoryNotFoundError:
+            utils.report_error(
+                "--inference option passed is not valid directory",
+                self.arguments.json_output)
+            sys.exit(1)
+        except errors.InvalidYAMLServiceFile as e:
+            utils.report_error(
+                "file {} does not match specified format for YAML service files".
+                format(e.filename), self.arguments.json_output)
+            sys.exit(1)
+        except errors.InvalidCSVInferenceFile:
+            utils.report_error(
+                "inference csv file does not match specified format for inference files".
+                format(e.filename), self.arguments.json_output)
+            sys.exit(1)
+        except errors.PatternFileNotFileError:
+            utils.report_error("--pattern option passed is not valid file",
+                               self.arguments.json_output)
+            sys.exit(1)
+        except:
+            utils.report_error("unexpected error occured while loading files",
+                               self.arguments.json_output)
+            sys.exit(1)
 
         self.environment = Environment(ua_analyzer, inference_engine,
                                        service_analyzer)
