@@ -327,9 +327,9 @@ class HTTPHandler(Handler):
     def merge_authorless_service(self, device, pkg):
         """This method needs to add AuthorlessService activity to Device and Service.
         
-        If the device does not contain this AuthorlessService as a Service, its because
-        no App was detected to have originated that Service. If an App was involved, the Service
-        would have been detected because it was searched. (After if app...)
+        This device will always contain this AuthorlessService, as an App Service or an unasigned Service.
+        This is because the service es searched (and added to the device) the same way the AuthorlessService was (plus host match).
+        So, there is no chance that an AuthorlessService was detected but not the same service for this device
         """
         existing_service = self.environment.locate_service(pkg)
 
@@ -373,17 +373,26 @@ class HTTPHandler(Handler):
 
             app = device.stream_to_app.get(pkg.tcp.stream)
 
-            if app:
-                service = self.search_service(pkg)
-                if service:
-                    # If app is a new app, a new service can be associated with it.
-                    incorporated_service = app.proccess_service_from_new_stream(
-                        service, pkg.sniff_time, pkg.length, pkg.tcp.stream)
+            service = self.search_service(pkg)
+            if app and service:
+                # If app is a new app, a new service can be associated with it.
+                incorporated_service = app.proccess_service_from_new_stream(
+                    service, pkg.sniff_time, pkg.length, pkg.tcp.stream)
 
-                    # Add possible new ips and hosts
-                    incorporated_service.ips.add(pkg.ip.dst)
-                    if hasattr(pkg.http, 'host'):
-                        incorporated_service.hosts.add(pkg.http.host)
+                # Add possible new ips and hosts
+                incorporated_service.ips.add(pkg.ip.dst)
+                if hasattr(pkg.http, 'host'):
+                    incorporated_service.hosts.add(pkg.http.host)
+
+            elif service:
+                # If no app is associated and it's a service, then is an unasigned service.
+                incorporated_service = device.proccess_unasigned_service_from_new_stream(
+                    service, pkg.sniff_time, pkg.length, pkg.tcp.stream)
+
+                # Add possible new ips and hosts
+                incorporated_service.ips.add(pkg.ip.dst)
+                if hasattr(pkg.http, 'host'):
+                    incorporated_service.hosts.add(pkg.http.host)
 
             if self.environment.has_temporal_stream(pkg):
                 # This will associate to this device former TCP packages

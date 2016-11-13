@@ -47,7 +47,12 @@ def print_device(number, device):
     for k, v in device.characteristics.items():
         aux.append([k, v.replace("%20", " ")])
     aux.append(['Associated Apps', len(device.apps)])
+    aux.append(['Unasigned Services', len(device.unasigned_services)])
     print(tabulate(aux))
+    print()
+    for x, s in enumerate(device.unasigned_services):
+        print_service(x, s)
+        print()
     for j, a in enumerate(device.apps):
         print()
         print("App {}:".format(j + 1))

@@ -220,6 +220,10 @@ class Device(ActivityDataManager):
         self.characteristics = {}
         self.activity = {}
 
+        # List of services that are not associated with App
+        self.unasigned_services = []
+        self.stream_to_unasigned_service = {}
+
         # For the app (and later the service) can be obtained with stream number
         self.stream_to_app = {}
 
@@ -313,11 +317,41 @@ class Device(ActivityDataManager):
         if inferences:
             self.characteristics.update(inferences)
 
+    def proccess_unasigned_service_from_new_stream(self, service, time, length,
+                                                   stream_number):
+        """It can create a new service or find an existing one that matches.
+        It links the stream to the service
+
+        If new Service is created, it is added to unasigned services
+        """
+        existing = False
+        curr_service = service
+
+        for each in self.unasigned_services:
+            if each.name == service.name:
+                existing = True
+                curr_service = each
+                break
+
+        if not existing:
+            self.unasigned_services.append(curr_service)
+
+        curr_service.add_activity(time, length)
+        self.stream_to_unasigned_service[stream_number] = curr_service
+
+        return curr_service
+
     def get_service_from_stream(self, stream_number):
+        """Can return an App Service or an unasigned Service"""
         app = self.stream_to_app.get(stream_number)
-        if not app:
-            return None
-        return app.stream_to_service[stream_number]
+        if app:
+            return app.stream_to_service[stream_number]
+        else:
+            unasigned_service = self.stream_to_unasigned_service.get(
+                stream_number)
+            if not unasigned_service:
+                return None
+            return unasigned_service
 
 
 class DeviceLess():
