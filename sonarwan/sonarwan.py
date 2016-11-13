@@ -63,7 +63,7 @@ class SonarWan(object):
             sonarwan_full = SonarwanRep(self)
             print(sonarwan_full.toJSON())
         else:
-            utils.pretty_print(self)
+            utils.pretty_print(self, self.arguments.file_output)
 
 
 class Summary(object):

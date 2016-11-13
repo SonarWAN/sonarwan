@@ -3,13 +3,14 @@ import time
 from tabulate import tabulate
 import datetime
 import json
+import sys
 
 FRAMES_TO_INFORM = 10
 
 
 def show_progress(pkg_index):
     # Write on error so that user can redirect stdout
-    sys.stderr.write('\rProcessed packets {}'.format(pkg_index))
+    sys.stdout.write('\rProcessed packets {}'.format(pkg_index))
     sys.stdout.flush()
 
 
@@ -18,73 +19,86 @@ def inform_json_progress(number, path):
     print(json.dumps({'update': update}))
 
 
-def pretty_print(sonarwan):
-    print()
-    print_title("SUMMARY")
-    print(
-        "SonarWAN found {} devices and {} authorless services in {} capture files.".
+def pretty_print(sonarwan, file_output=None):
+    if file_output:
+        fd = open(file_output, 'w')
+    else:
+        fd = sys.stdout
+
+    fd.write("\n")
+    print_title("SUMMARY", fd)
+    fd.write(
+        "SonarWAN found {} devices and {} authorless services in {} capture files.\n".
         format(
             len(sonarwan.environment.devices), len(
                 sonarwan.environment.authorless_services),
             sonarwan.file_count))
-    print("{} packets were analyzed.".format(sonarwan.i))
-    print("Execution time: {}".format((time.time() - sonarwan.start_time)))
-    print_title("DETAILS")
-    print_title("Devices")
+    fd.write("{} packets were analyzed.\n".format(sonarwan.i))
+    fd.write("Execution time: {}\n".format((time.time() - sonarwan.start_time
+                                            )))
+    print_title("DETAILS", fd)
+    print_title("Devices", fd)
     for i, d in enumerate(sonarwan.environment.devices):
-        print_device(i, d)
-        print()
-    print_title("Authorless Services")
+        print_device(i, d, fd)
+    print_title("Authorless Services", fd)
     for i, s in enumerate(sonarwan.environment.authorless_services):
-        print_service(i, s)
-        print()
+        print_service(i, s, fd)
 
 
-def print_device(number, device):
-    print_subtitle("Device {}".format(number + 1))
+def print_device(number, device, fd):
+    print_subtitle("Device {}".format(number + 1), fd)
     aux = []
-    print('\nCharacteristics:')
+    fd.write('\nCharacteristics:\n')
     for k, v in device.characteristics.items():
         aux.append([k, v.replace("%20", " ")])
     aux.append(['Associated Apps', len(device.apps)])
     aux.append(['Unasigned Services', len(device.unasigned_services)])
-    print(tabulate(aux))
-    print()
+    fd.write("{}\n".format(tabulate(aux)))
+    fd.write("\n")
     for x, s in enumerate(device.unasigned_services):
-        print_service(x, s)
-        print()
+        print_unassigned_service(x, s, fd)
+        fd.write("\n")
     for j, a in enumerate(device.apps):
-        print()
-        print("App {}:".format(j + 1))
+        fd.write("\n")
+        fd.write("App {}:\n".format(j + 1))
         aux = []
         for k, v in a.characteristics.items():
             aux.append([k, v.replace("%20", " ")])
         aux.append(['Associated Services', len(a.services)])
-        print(tabulate(aux))
-        print()
+        fd.write("{}\n".format(tabulate(aux)))
+        fd.write("\n")
         for x, s in enumerate(a.services):
-            print_service(x, s)
-            print()
+            print_service(x, s, fd)
+            fd.write("\n")
 
 
-def print_service(number, service):
+def print_unassigned_service(number, service, fd):
+    _print_service(number, service, fd, True)
+
+
+def print_service(number, service, fd):
+    _print_service(number, service, fd, False)
+
+
+def _print_service(number, service, fd, unassigned):
     aux = []
-    print("Service {}:".format(number + 1))
+    fd.write("{}Service {}:\n".format("Unassigned "
+                                      if unassigned else "", number + 1))
     aux.append(['name', service.name])
     aux.append(['type', service.type or 'Unknown URL'])
     if len(service.ips) > 0:
         aux.append(['ips', service.ips])
     if len(service.hosts) > 0:
         aux.append(['hosts', service.hosts])
-    print(tabulate(aux))
-    print('\nActivity:')
+    fd.write("{}\n".format(tabulate(aux)))
+    fd.write('\nActivity:\n')
     aux = []
     for k, v in service.activity.items():
         aux.append([k, v])
-    print(tabulate(aux))
+    fd.write("{}\n".format(tabulate(aux)))
 
 
-def print_title(string):
+def print_title(string, fd):
     """Prints like 
 
         *****
@@ -92,17 +106,17 @@ def print_title(string):
         *****
     """
     aux = '*' * len(string)
-    print("\n{}".format(aux))
-    print(string)
-    print("{}\n".format(aux))
+    fd.write("\n{}\n".format(aux))
+    fd.write("{}\n".format(string))
+    fd.write("{}\n\n".format(aux))
 
 
-def print_subtitle(string):
+def print_subtitle(string, fd):
     """Prints like 
 
         Subtitle
         =======
     """
     aux = '=' * len(string)
-    print(string)
-    print("{}".format(aux))
+    fd.write("{}\n".format(string))
+    fd.write("{}\n\n".format(aux))

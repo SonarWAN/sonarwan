@@ -4,13 +4,14 @@ import argparse
 class Arguments(object):
     def __init__(self, json_output, user_patterns_file,
                  user_inference_directory, user_services_directory,
-                 progress_output):
+                 progress_output, file_output):
 
         self.json_output = json_output
         self.progress_output = progress_output
         self.user_patterns_file = user_patterns_file
         self.user_inference_directory = user_inference_directory
         self.user_services_directory = user_services_directory
+        self.file_output = file_output
 
         self.add_final_character()
 
@@ -50,6 +51,11 @@ class Arguments(object):
             "--json",
             help="Outputs information in JSON format.",
             action="store_true")
+        parser.add_argument(
+            "-o",
+            "--output",
+            help="Output file to write report. Works when --json option is NOT set."
+        )
         parser.add_argument(
             "--progress",
             help="Updates amount of frames analyzed. Works only with --json option.",
