@@ -49,12 +49,12 @@ class Arguments(object):
         parser.add_argument(
             "-j",
             "--json",
-            help="Outputs information in JSON format.",
+            help="Outputs information in JSON format. Ideal to be consumed as an API.",
             action="store_true")
         parser.add_argument(
             "-o",
             "--output",
-            help="Output file to write report. Works when --json option is NOT set."
+            help="Output file to write report. Works when --json option is NOT set. If not specified report will be shown in stdout"
         )
         parser.add_argument(
             "--progress",

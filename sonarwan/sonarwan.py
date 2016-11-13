@@ -27,7 +27,7 @@ class SonarWan(object):
         self.environment = Environment(ua_analyzer, inference_engine,
                                        service_analyzer)
 
-    def show_progress(self):
+    def show_progress(self, path):
         if not self.arguments.json_output:
             utils.show_progress(self.i)
 
@@ -55,7 +55,7 @@ class SonarWan(object):
         for pkg in cap:
             self.i += 1
 
-            self.show_progress()
+            self.show_progress(path)
             self.environment.update(pkg)
 
     def print_info(self):

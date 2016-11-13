@@ -16,11 +16,14 @@ def show_progress(pkg_index):
 
 def inform_json_progress(number, path):
     update = {'Packets': number, 'Current File': path}
-    print(json.dumps({'update': update}))
+    print(json.dumps({'Update': update}))
 
 
 def pretty_print(sonarwan, file_output=None):
     if file_output:
+        print(
+            "\n\nFinished proccesing {} frames across {} files. Report is available in {}\n".
+            format(sonarwan.i, sonarwan.file_count, file_output))
         fd = open(file_output, 'w')
     else:
         fd = sys.stdout
