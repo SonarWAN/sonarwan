@@ -29,14 +29,20 @@ class Environment(object):
     def prepare(self):
         """Resets all stream maps when new file is going to be proccesed"""
 
+        # Stream to device
         self.device_stream_map = {
             Transport.TCP: {},
             Transport.UDP: {},
         }
+
+        # Stream to service
         self.service_stream_map = {
             Transport.TCP: {},
             Transport.UDP: {},
         }
+
+        # Currently unasigned streams.
+        # Saves activity only
         self.temporal_stream_map = {
             Transport.TCP: {},
             Transport.UDP: {},

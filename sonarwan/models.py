@@ -81,7 +81,11 @@ class App(object):
 
     def proccess_service_from_new_stream(self, service, time, length,
                                          stream_number):
-        """It can create a new service or find an existing one that matches."""
+        """It can create a new service or find an existing one that matches.
+        It links the stream to the service
+
+        If new Service is created, it is added to App services
+        """
         existing = False
         curr_service = service
 
