@@ -16,3 +16,4 @@ trollius==1.0.4
 ua-parser==0.7.1
 wcwidth==0.1.7
 yapf==0.12.1
+pyyaml==3.12
