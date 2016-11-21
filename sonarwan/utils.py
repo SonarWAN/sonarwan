@@ -18,7 +18,7 @@ def report_error(msg, json_output):
     if json_output:
         print(json.dumps({'Error': msg}))
     else:
-        print("ERROR: {}".format(msg))
+        print("ERROR: {}. See sonarwan.log file for more details.".format(msg))
 
 
 def inform_json_progress(number, path):

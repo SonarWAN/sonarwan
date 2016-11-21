@@ -11,7 +11,7 @@ def main():
     sonarwan = SonarWan(arguments)
     sonarwan.run(args.files)
     sonarwan.print_info()
-
+    logger.info('SonarWAN ended succesfully')
 
 if __name__ == '__main__':
     main()

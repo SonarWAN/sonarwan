@@ -2,6 +2,7 @@ import pyshark
 import time
 import json
 import sys
+from logger import logger
 
 from environment import Environment
 from models import AppLess, DeviceLess, ServiceLess
@@ -31,31 +32,38 @@ class SonarWan(object):
             utils.report_error(
                 "--service option passed is not valid directory",
                 self.arguments.json_output)
+            logger.error(e)
             sys.exit(1)
         except errors.InferenceDirectoryNotFoundError:
             utils.report_error(
                 "--inference option passed is not valid directory",
                 self.arguments.json_output)
+            logger.error(e)
             sys.exit(1)
         except errors.InvalidYAMLServiceFile as e:
             utils.report_error(
                 "file {} does not match specified format for YAML service files".
                 format(e.filename), self.arguments.json_output)
+            logger.error(e)
             sys.exit(1)
         except errors.InvalidCSVInferenceFile:
             utils.report_error(
                 "inference csv file does not match specified format for inference files".
                 format(e.filename), self.arguments.json_output)
+            logger.error(e)
             sys.exit(1)
         except errors.PatternFileNotFileError:
             utils.report_error("--pattern option passed is not valid file",
                                self.arguments.json_output)
+            logger.error(e)
             sys.exit(1)
         except:
             utils.report_error("unexpected error occured while loading files",
                                self.arguments.json_output)
+            logger.error(e)
             sys.exit(1)
 
+        logger.info('Finish loading tools')
         self.environment = Environment(ua_analyzer, inference_engine,
                                        service_analyzer)
 
@@ -71,10 +79,19 @@ class SonarWan(object):
         self.i = 0
         self.file_count = 0
 
-        for each in files:
-            self.file_count += 1
-            self.analyze(each)
+        try:
+            for each in files:
+                logger.info('Processing {}'.format(each[each.rindex('/')+1:]))
+                self.file_count += 1
+                self.analyze(each)
 
+        except Exception as e:
+            utils.report_error("Unexpected error occured while proccesing file {}".format(each[each.rindex('/')+1:]),
+                               self.arguments.json_output)
+            logger.error(str(e))
+            sys.exit(1)
+
+        logger.info('Succesfully analyzed all files')
         self.total_time = time.time() - self.start_time
 
     def analyze(self, path):
