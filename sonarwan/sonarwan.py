@@ -75,6 +75,12 @@ class SonarWan(object):
             utils.inform_json_progress(self.i, path)
 
     def run(self, files):
+        if not all(self.is_valid_file(f) for f in files):
+            utils.report_error(
+                "invalid files passed. All files must be in pcap or pcapng format",
+                self.arguments.json_output)
+            sys.exit(1)
+
         self.start_time = time.time()
         self.i = 0
         self.file_count = 0
@@ -93,6 +99,9 @@ class SonarWan(object):
 
         logger.info('Succesfully analyzed all files')
         self.total_time = time.time() - self.start_time
+
+    def is_valid_file(self, path):
+        return path.endswith('.pcap') or path.endswith('.pcapng')
 
     def analyze(self, path):
         cap = pyshark.FileCapture(path)
