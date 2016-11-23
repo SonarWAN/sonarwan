@@ -1,5 +1,6 @@
 from arguments import Arguments
 from sonarwan import SonarWan
+from logger import logger
 
 
 def main():
