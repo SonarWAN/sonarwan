@@ -155,6 +155,13 @@ class Service(ActivityDataManager):
         service.type = 'Generic'
         return service
 
+    @classmethod
+    def from_ip_only(cls, ip):
+        service = cls()
+        service.name = 'Unknown (IP {})'.format(ip)
+        service.type = 'Generic'
+        return service
+
 
 class AuthorlessService(Service):
     """An Authorless Service is a Service that has no App (and no Device) associated
@@ -345,7 +352,7 @@ class Device(ActivityDataManager):
         """Can return an App Service or an unasigned Service"""
         app = self.stream_to_app.get(stream_number)
         if app:
-            return app.stream_to_service[stream_number]
+            return app.stream_to_service.get(stream_number)
         else:
             unasigned_service = self.stream_to_unasigned_service.get(
                 stream_number)

@@ -87,13 +87,15 @@ class SonarWan(object):
 
         try:
             for each in files:
-                logger.info('Processing {}'.format(each[each.rindex('/')+1:]))
+                logger.info('Processing {}'.format(each[each.rindex('/') +
+                                                        1:]))
                 self.file_count += 1
                 self.analyze(each)
 
         except Exception as e:
-            utils.report_error("Unexpected error occured while proccesing file {}".format(each[each.rindex('/')+1:]),
-                               self.arguments.json_output)
+            utils.report_error(
+                "Unexpected error occured while proccesing file {}".format(
+                    each[each.rindex('/') + 1:]), self.arguments.json_output)
             logger.error(str(e))
             sys.exit(1)
 

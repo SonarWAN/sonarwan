@@ -36,6 +36,14 @@ def get_dns_answers(pkg):
     return ret
 
 
+def is_ipaddress(string):
+    try:
+        ipaddress.ip_address(string)
+        return True
+    except ValueError:
+        return False
+
+
 def is_client_hello(pkg):
     return (hasattr(pkg.ssl, 'record') and
             pkg.ssl.record.split(': ')[-1] == 'Client Hello')
@@ -273,13 +281,19 @@ class HTTPHandler(Handler):
             return service
 
         if hasattr(pkg.http, 'host'):
-            name = get_significant_name_from_url(pkg.http.host)
-            service = self.environment.service_analyzer.find_service_from_absolute_url(
-                pkg.http.host
-            ) or self.environment.service_analyzer.find_service_from_url(
-                pkg.http.host) or Service.from_name(name)
-            service.hosts.add(pkg.http.host)
-            return service
+            # When header host is IP addr, create service 'Unknown (IP)'. 
+            # If not, service will have name of the IP
+            # The name must have info of the IP for the equals btw services
+            if is_ipaddress(pkg.http.host):
+                return Service.from_ip_only(pkg.http.host)
+            else:
+                name = get_significant_name_from_url(pkg.http.host)
+                service = self.environment.service_analyzer.find_service_from_absolute_url(
+                    pkg.http.host
+                ) or self.environment.service_analyzer.find_service_from_url(
+                    pkg.http.host) or Service.from_name(name)
+                service.hosts.add(pkg.http.host)
+                return service
         else:
             return None
 
@@ -381,7 +395,8 @@ class HTTPHandler(Handler):
 
                 # Add possible new ips and hosts
                 incorporated_service.ips.add(pkg.ip.dst)
-                if hasattr(pkg.http, 'host'):
+                if hasattr(pkg.http,
+                           'host') and not is_ipaddress(pkg.http.host):
                     incorporated_service.hosts.add(pkg.http.host)
 
             elif service:

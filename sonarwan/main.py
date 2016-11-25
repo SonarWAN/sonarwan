@@ -14,5 +14,6 @@ def main():
     sonarwan.print_info()
     logger.info('SonarWAN ended succesfully')
 
+
 if __name__ == '__main__':
     main()
