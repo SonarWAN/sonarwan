@@ -364,8 +364,9 @@ class Device(ActivityDataManager):
 class DeviceLess():
     """Used for JSON output"""
 
-    def __init__(self, apps, characteristics, activity):
+    def __init__(self, unassigned_services, apps, characteristics, activity):
         self.apps = apps
+        self.unassigned_services = unassigned_services
         self.characteristics = characteristics
         self.activity = activity
 
