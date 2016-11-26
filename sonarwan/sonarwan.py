@@ -185,5 +185,5 @@ class SonarwanRep(object):
                 'Report': self
             },
             default=lambda o: o.__dict__,
-            indent=4,
-            sort_keys=True)
+            sort_keys=True,
+            separators=(',', ':'))
