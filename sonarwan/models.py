@@ -41,7 +41,7 @@ class ActivityDataManager(object):
     """Contains only utils classes to manage activity"""
 
     def add_activity(self, time, bytes_count):
-        time_string = time.strftime('%D %H:%M:%S')
+        time_string = time.replace(microsecond=0).isoformat()
         self.activity[time_string] = self.activity.get(time_string,
                                                        0) + int(bytes_count)
 

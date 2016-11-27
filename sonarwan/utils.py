@@ -1,7 +1,6 @@
 import sys
 import time
 from tabulate import tabulate
-import datetime
 import json
 import sys
 
