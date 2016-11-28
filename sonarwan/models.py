@@ -79,7 +79,7 @@ class App(object):
                                        len(new_value) > len(current_value)):
                 self.characteristics[k] = new_value
 
-    def proccess_service_from_new_stream(self, service, time, length,
+    def process_service_from_new_stream(self, service, time, length,
                                          stream_number):
         """It can create a new service or find an existing one that matches.
         It links the stream to the service
@@ -324,7 +324,7 @@ class Device(ActivityDataManager):
         if inferences:
             self.characteristics.update(inferences)
 
-    def proccess_unasigned_service_from_new_stream(self, service, time, length,
+    def process_unasigned_service_from_new_stream(self, service, time, length,
                                                    stream_number):
         """It can create a new service or find an existing one that matches.
         It links the stream to the service

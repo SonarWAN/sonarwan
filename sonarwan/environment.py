@@ -30,7 +30,7 @@ class Environment(object):
         self.address_host = {}
 
     def prepare(self):
-        """Resets all stream maps when new file is going to be proccesed"""
+        """Resets all stream maps when new file is going to be processed"""
 
         # Stream to device
         self.device_stream_map = {
@@ -52,7 +52,7 @@ class Environment(object):
         }
 
     def update(self, pkg):
-        """A handler will proccess the package based on type of package"""
+        """A handler will process the package based on type of package"""
         self.update_time_boundaries(pkg.sniff_time)
 
         if hasattr(pkg, 'ip'):

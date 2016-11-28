@@ -1,5 +1,5 @@
 """
-This module modifies enviroment by proccessing and linking packages
+This module modifies enviroment by processing and linking packages
 
 Important, PyShark (that is, TShark) identifies HTTP frame to the last frame
 of the TCP packages that complete the message. So, for example if a HTTP Request
@@ -390,7 +390,7 @@ class HTTPHandler(Handler):
             service = self.search_service(pkg)
             if app and service:
                 # If app is a new app, a new service can be associated with it.
-                incorporated_service = app.proccess_service_from_new_stream(
+                incorporated_service = app.process_service_from_new_stream(
                     service, pkg.sniff_time, pkg.length, pkg.tcp.stream)
 
                 # Add possible new ips and hosts
@@ -401,7 +401,7 @@ class HTTPHandler(Handler):
 
             elif service:
                 # If no app is associated and it's a service, then is an unasigned service.
-                incorporated_service = device.proccess_unasigned_service_from_new_stream(
+                incorporated_service = device.process_unasigned_service_from_new_stream(
                     service, pkg.sniff_time, pkg.length, pkg.tcp.stream)
 
                 # Add possible new ips and hosts
