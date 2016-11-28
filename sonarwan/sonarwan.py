@@ -134,6 +134,8 @@ class Summary(object):
         self.packets = sonarwan.i
         self.execution_time = int(sonarwan.total_time * 100) / 100
         self.files = sonarwan.file_count
+        self.start_time = sonarwan.environment.start_time.isoformat()
+        self.end_time = sonarwan.environment.end_time.isoformat()
 
 
 class SonarwanRep(object):

@@ -10,6 +10,9 @@ class Environment(object):
 
     def __init__(self, ua_analyzer, inference_engine, service_analyzer):
 
+        self.start_time = None
+        self.end_time = None
+
         self.devices = []
         self.authorless_services = []
 
@@ -50,6 +53,7 @@ class Environment(object):
 
     def update(self, pkg):
         """A handler will proccess the package based on type of package"""
+        self.update_time_boundaries(pkg.sniff_time)
 
         if hasattr(pkg, 'ip'):
             layers = [each.layer_name for each in pkg.layers]
@@ -65,6 +69,14 @@ class Environment(object):
 
             elif 'udp' in layers:
                 self.udp_handler.process(pkg)
+
+    def update_time_boundaries(self, time):
+        if self.start_time is None:
+            self.start_time = time
+        if self.end_time is None:
+            self.end_time = time
+        self.start_time = min(self.start_time, time)
+        self.end_time = max(self.end_time, time)
 
     def find_host(self, address):
         """Returns host if the IP address was answer from a DNS query.
