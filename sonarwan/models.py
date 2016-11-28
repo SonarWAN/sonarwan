@@ -183,7 +183,7 @@ class AuthorlessService(Service):
         self.activity_per_stream = {Transport.UDP: {}, Transport.TCP: {}}
 
     def add_activity_to_stream(self, protocol, stream, time, bytes_count):
-        time_string = time.strftime('%D %H:%M:%S')
+        time_string = time.replace(microsecond=0).isoformat()
 
         if stream not in self.activity_per_stream[protocol]:
             self.activity_per_stream[protocol][stream] = {}
