@@ -1,6 +1,7 @@
 import csv
 import random
 from constants import Transport
+from utils import sort_by_value
 
 
 def merge_dicts(base, to_merge, operation):
@@ -68,6 +69,9 @@ class App(object):
         # Maps every stream to a service to have fast access
         self.stream_to_service = {}
 
+    def get_size(self):
+        return sum(each.get_size() for each in self.services)
+
     def update_app(self, app_args):
         """Add new characteristics and updates them if new characteristic is longer than current"""
 
@@ -102,6 +106,13 @@ class App(object):
         self.stream_to_service[stream_number] = curr_service
 
         return curr_service
+    
+    def sort_services(self):
+        s_map = {}
+        for each_service in self.services:
+            s_map[each_service] = each_service.get_size()
+
+        sort_by_value(self.services, s_map)
 
 
 class Service(ActivityDataManager):
@@ -161,6 +172,9 @@ class Service(ActivityDataManager):
         service.name = 'Unknown (IP {})'.format(ip)
         service.type = 'Generic'
         return service
+
+    def get_size(self):
+        return sum([v for k,v in self.activity.items()])
 
 
 class AuthorlessService(Service):
@@ -235,6 +249,24 @@ class Device(ActivityDataManager):
         self.stream_to_app = {}
 
         self.inference_engine = inference_engine
+
+    def get_size(self):
+        return sum(e.get_size() for e in self.apps) + sum(e.get_size() for e in self.unasigned_services)
+
+    def sort_apps(self):
+        app_map = {}
+        for each_app in self.apps:
+            each_app.sort_services()
+            app_map[each_app] = each_app.get_size()
+
+        sort_by_value(self.apps, app_map)
+
+    def sort_unassigned_services(self):
+        us_map = {}
+        for each_service in self.unasigned_services:
+            us_map[each_service] = each_service.get_size()
+
+        sort_by_value(self.unasigned_services, us_map)
 
     def match_score(self, device_args, app_args):
         """Based on device and app dictionary of characteristics it returns a score of correspondence

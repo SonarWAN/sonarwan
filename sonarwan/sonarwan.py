@@ -101,6 +101,7 @@ class SonarWan(object):
 
         logger.info('Succesfully analyzed all files')
         self.total_time = time.time() - self.start_time
+        self.environment.sort_results()
 
     def is_valid_file(self, path):
         return path.endswith('.pcap') or path.endswith('.pcapng')

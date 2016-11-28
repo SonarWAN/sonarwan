@@ -1,5 +1,6 @@
 from models import Device
 from constants import Transport
+from utils import sort_by_value
 
 import streams
 import handlers
@@ -28,6 +29,26 @@ class Environment(object):
 
         # Cache for DNS queries
         self.address_host = {}
+
+    def sort_authorless_services(self):
+        as_map = {}
+        for each_authorless_service in self.authorless_services:
+            as_map[each_authorless_service] = each_authorless_service.get_size()
+
+        sort_by_value(self.authorless_services, as_map)
+
+    def sort_devices(self):
+        d_map = {}
+        for each_device in self.devices:
+            each_device.sort_apps()
+            each_device.sort_unassigned_services()
+            d_map[each_device] = each_device.get_size()
+
+        sort_by_value(self.devices, d_map)
+
+    def sort_results(self):
+        self.sort_authorless_services()
+        self.sort_devices()
 
     def prepare(self):
         """Resets all stream maps when new file is going to be processed"""

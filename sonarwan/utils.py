@@ -7,6 +7,16 @@ import sys
 FRAMES_TO_INFORM = 10
 
 
+def sort_by_value(l, value_map, ascending=True):
+    asc = 1 if ascending else -1
+    for i in range(len(l)-1):
+        for j in range(i+1, len(l)):
+            if (value_map[l[i]] - value_map[l[j]])*asc < 0:
+                aux = l[i]
+                l[i] = l[j]
+                l[j] = aux
+
+
 def show_progress(pkg_index):
     # Write on error so that user can redirect stdout
     sys.stdout.write('\rProcessed packets {}'.format(pkg_index))
