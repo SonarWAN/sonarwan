@@ -25,7 +25,7 @@ def show_progress(pkg_index):
 
 def report_error(msg, json_output):
     if json_output:
-        print(json.dumps({'Error': msg}))
+        print(json.dumps({'error': msg}))
     else:
         print("ERROR: {}. See sonarwan.log file for more details.".format(msg))
 
