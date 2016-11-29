@@ -9,9 +9,9 @@ FRAMES_TO_INFORM = 10
 
 def sort_by_value(l, value_map, ascending=True):
     asc = 1 if ascending else -1
-    for i in range(len(l)-1):
-        for j in range(i+1, len(l)):
-            if (value_map[l[i]] - value_map[l[j]])*asc < 0:
+    for i in range(len(l) - 1):
+        for j in range(i + 1, len(l)):
+            if (value_map[l[i]] - value_map[l[j]]) * asc < 0:
                 aux = l[i]
                 l[i] = l[j]
                 l[j] = aux
@@ -69,7 +69,7 @@ def print_device(number, device, fd):
     aux = []
     fd.write('\nCharacteristics:\n')
     for k, v in device.characteristics.items():
-        aux.append([k, v.replace("%20", " ")])
+        aux.append([k, v])
     aux.append(['Associated Apps', len(device.apps)])
     aux.append(['Unasigned Services', len(device.unasigned_services)])
     fd.write("{}\n".format(tabulate(aux)))
@@ -82,7 +82,7 @@ def print_device(number, device, fd):
         fd.write("App {}:\n".format(j + 1))
         aux = []
         for k, v in a.characteristics.items():
-            aux.append([k, v.replace("%20", " ")])
+            aux.append([k, v])
         aux.append(['Associated Services', len(a.services)])
         fd.write("{}\n".format(tabulate(aux)))
         fd.write("\n")

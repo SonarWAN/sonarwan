@@ -84,7 +84,7 @@ class App(object):
                 self.characteristics[k] = new_value
 
     def process_service_from_new_stream(self, service, time, length,
-                                         stream_number):
+                                        stream_number):
         """It can create a new service or find an existing one that matches.
         It links the stream to the service
 
@@ -106,7 +106,7 @@ class App(object):
         self.stream_to_service[stream_number] = curr_service
 
         return curr_service
-    
+
     def sort_services(self):
         s_map = {}
         for each_service in self.services:
@@ -174,7 +174,7 @@ class Service(ActivityDataManager):
         return service
 
     def get_size(self):
-        return sum([v for k,v in self.activity.items()])
+        return sum([v for k, v in self.activity.items()])
 
 
 class AuthorlessService(Service):
@@ -251,7 +251,9 @@ class Device(ActivityDataManager):
         self.inference_engine = inference_engine
 
     def get_size(self):
-        return sum(e.get_size() for e in self.apps) + sum(e.get_size() for e in self.unasigned_services)
+        return sum(e.get_size()
+                   for e in self.apps) + sum(e.get_size()
+                                             for e in self.unasigned_services)
 
     def sort_apps(self):
         app_map = {}
@@ -357,7 +359,7 @@ class Device(ActivityDataManager):
             self.characteristics.update(inferences)
 
     def process_unasigned_service_from_new_stream(self, service, time, length,
-                                                   stream_number):
+                                                  stream_number):
         """It can create a new service or find an existing one that matches.
         It links the stream to the service
 

@@ -242,6 +242,12 @@ class UserAgentAnalyzer(object):
             device_args['os_distribution'] = device_args['os_family']
             device_args['os_family'] = 'Linux'
 
+        device_args = {
+            k: v.replace('%20', ' ')
+            for k, v in device_args.items()
+        }
+        app_args = {k: v.replace('%20', ' ') for k, v in app_args.items()}
+
         return {'device_args': device_args, 'app_args': app_args}
 
 

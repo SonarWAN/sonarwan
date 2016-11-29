@@ -33,7 +33,8 @@ class Environment(object):
     def sort_authorless_services(self):
         as_map = {}
         for each_authorless_service in self.authorless_services:
-            as_map[each_authorless_service] = each_authorless_service.get_size()
+            as_map[each_authorless_service] = each_authorless_service.get_size(
+            )
 
         sort_by_value(self.authorless_services, as_map)
 

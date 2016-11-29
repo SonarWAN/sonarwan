@@ -154,7 +154,8 @@ class SonarwanRep(object):
             apps = []
             unassigned_services = []
             for each_service in each.unasigned_services:
-                unassigned_services.append(ServiceLess(each_service.activity, each_service.name,
+                unassigned_services.append(
+                    ServiceLess(each_service.activity, each_service.name,
                                 each_service.type, each_service.ips,
                                 each_service.hosts))
             for each_app in each.apps:
@@ -167,7 +168,8 @@ class SonarwanRep(object):
                 apps.append(AppLess(each_app.characteristics, services))
 
             self.devices.append(
-                DeviceLess(unassigned_services, apps, each.characteristics, each.activity))
+                DeviceLess(unassigned_services, apps, each.characteristics,
+                           each.activity))
 
     def init_services(self, services):
         """Generates authorless service list with only neccessary info for JSON output"""
