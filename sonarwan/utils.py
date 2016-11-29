@@ -31,8 +31,8 @@ def report_error(msg, json_output):
 
 
 def inform_json_progress(number, path):
-    update = {'Packets': number, 'Current File': path}
-    print(json.dumps({'Update': update}))
+    update = {'packets': number, 'file': path}
+    print(json.dumps({'update': update}))
 
 
 def pretty_print(sonarwan, file_output=None):
