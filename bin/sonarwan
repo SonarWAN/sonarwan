@@ -3,5 +3,7 @@
 # cd to the script directory
 cd "$(dirname "$0")" || exit 1
 
+export PYTHONUNBUFFERED=1
+
 source ../env/bin/activate
 python ../sonarwan/main.py --progress --json "$@"
