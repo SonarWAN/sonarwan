@@ -248,6 +248,15 @@ class UserAgentAnalyzer(object):
         }
         app_args = {k: v.replace('%20', ' ') for k, v in app_args.items()}
 
+        for k, v in device_args.items():
+            other = '.' if 'version' in k or 'kit' in k else ' ' 
+            device_args[k] = "".join([ c if c.isalnum() else other for c in v ])
+
+        for k, v in app_args.items():
+            other = '.' if 'version' in k or 'kit' in k else ' ' 
+            app_args[k] = "".join([ c if c.isalnum() else other for c in v ])
+
+
         return {'device_args': device_args, 'app_args': app_args}
 
 
